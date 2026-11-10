@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Official Indian Rupee Symbol (Crisp Pure White Vector, Perfectly Centered) -->
+    <group
+        android:scaleX="2.4"
+        android:scaleY="2.4"
+        android:translateX="25.2"
+        android:translateY="25.2">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M13.66,7 C13.1,5.29 11.5,4.04 9.5,4 H6 V2 h12 V4 h-3.26 C15.6,4.8 16.32,5.84 16.66,7 H18 v2 h-1.12 C16.48,11.56 14.36,13.64 11.66,13.93 L18,22 h-3.2 L8.8,14 H6 v-2 h3.5 c2.2,0 4,-1.8 4,-4 H6 V7 h7.66 z" />
+    </group>
+</vector>

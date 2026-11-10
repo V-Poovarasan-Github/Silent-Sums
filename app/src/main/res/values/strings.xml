@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">SilentSums</string>
+    <string name="shortcut_add_expense_short">Add Expense</string>
+    <string name="shortcut_add_expense_long">Log a new expense transaction</string>
+    <string name="shortcut_add_income_short">Add Income</string>
+    <string name="shortcut_add_income_long">Log a new income transaction</string>
+    <string name="shortcut_view_dues_short">View Dues</string>
+    <string name="shortcut_view_dues_long">View upcoming dues and commitments</string>
+</resources>

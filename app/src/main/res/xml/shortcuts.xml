@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_expense"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:shortcutShortLabel="@string/shortcut_add_expense_short"
+        android:shortcutLongLabel="@string/shortcut_add_expense_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.silentsums"
+            android:targetClass="com.example.MainActivity">
+            <extra android:name="shortcut_action" android:value="add_expense" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="add_income"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:shortcutShortLabel="@string/shortcut_add_income_short"
+        android:shortcutLongLabel="@string/shortcut_add_income_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.silentsums"
+            android:targetClass="com.example.MainActivity">
+            <extra android:name="shortcut_action" android:value="add_income" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="view_dues"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher_foreground"
+        android:shortcutShortLabel="@string/shortcut_view_dues_short"
+        android:shortcutLongLabel="@string/shortcut_view_dues_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="app.silentsums"
+            android:targetClass="com.example.MainActivity">
+            <extra android:name="shortcut_action" android:value="view_dues" />
+        </intent>
+    </shortcut>
+</shortcuts>

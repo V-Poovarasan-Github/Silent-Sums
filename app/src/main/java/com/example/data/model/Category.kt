@@ -1,0 +1,15 @@
+package com.example.data.model
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "categories")
+data class Category(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val color: String = "#F59E0B",
+    val archived: Boolean = false,
+    val sortOrder: Int = 0,
+    @ColumnInfo(name = "icon_text") val iconText: String? = null
+)
