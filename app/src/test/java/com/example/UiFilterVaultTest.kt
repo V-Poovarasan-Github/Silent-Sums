@@ -3866,7 +3866,7 @@ class UiFilterVaultTest {
                 "Restore & Import: Import a CSV file or Restore from CSV Backup anytime.",
                 "Sample Data Mode: Runs in an isolated sandbox so real data stays untouched."
             )
-            val newCardHelpLine = "Pay Credit Card Due?: Credit Card Rows: TAP opens ledger; HOLD opens a pre-filled transfer of the amount due.."
+            val newCardHelpLine = "Pay Credit Card Due?: Credit Card Rows: TAP opens ledger; HOLD opens a pre-filled transfer of the amount due."
             val all28Expected = expectedOriginal27 + newCardHelpLine
 
             val actualAll = (com.example.ui.dashboard.AUDITED_AFFORDANCES + com.example.ui.dashboard.COMMON_TASKS_AFFORDANCES)

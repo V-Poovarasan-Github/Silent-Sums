@@ -147,3 +147,23 @@
      - `testStateDescriptionOnBudgetCard`: Verifies `"under limit"` state description and composed budget sentence.
      - `testFontScale200PercentNonClipping`: Verifies Compose hierarchy remains accessible and non-clipping at 2.0x font scale.
 
+---
+
+## TASK RELEASE-3 — PHASE 5: HELP, TIPS AND INFO ACCURACY (`DashboardScreen.kt`, `HelpGesturesSheet.kt`, `AllPagesUiRobolectricTest.kt`, `Polish1Test.kt`, `AuditAndAddendumHarnessTest.kt`, `UiFilterVaultTest.kt`, `Phase5HelpAccuracyTest.kt`)
+
+1. **5.1 Dashboard Trend Chart Hint (`DashboardScreen.kt`)**:
+   - Updated `trend_card_hint` from `"Long-press bars for exact dates"` to `"Tap to zoom, hold to open ledger"` to match the actual tap-to-zoom and long-press-to-open-ledger behavior.
+2. **5.2 Credit Card Rows Typo Fix (`HelpGesturesSheet.kt`)**:
+   - Fixed the `"due.."` double period typo in the `"Pay Credit Card Due?"` entry so it reads: `"Credit Card Rows: TAP opens ledger; HOLD opens a pre-filled transfer of the amount due."`
+3. **5.3 Full Audit of All 28 Help Entries Against Live Code**:
+   - Verified all 9 Dashboard, 7 Expenses/Ledger, 6 Lists, and 6 Settings/Common Tasks entries against `DashboardScreen.kt`, `LedgerScreen.kt`, `EntryScreen.kt`, `ListsScreen.kt`/`ListsViewModel.kt`, and `SettingsScreen.kt`.
+   - Confirmed `ListsScreen.kt` has exactly 4 tabs (`ListsTab.CATEGORIES`, `ListsTab.ACCOUNTS`, `ListsTab.FIELDS`, `ListsTab.BUDGETS` rendered as Categories, Sources, Fields, and Budgets; Commitments/Bills & IOUs lives in the top header Bell sheet, not a 5th tab).
+   - Confirmed `"Monthly Budgets: Tap to view rows; hold to edit limit inline."` matches the tap (`viewTransactionsAction`) and hold (`editBudgetLimitAction` / `editBudgetText`) handlers.
+4. **5.4 TalkBack Guidance Line (`HelpGesturesSheet.kt`)**:
+   - Added `TALKBACK_HELP_NOTE` (`"With TalkBack, use the Actions menu on rows and cards instead of swiping or holding."`) with `testTag("help_gestures_talkback_note")` at the top of `HelpGesturesSheet` across all sheet sections.
+5. **5.5 Word-Count & Canonical Test Alignment**:
+   - Updated `Polish1Test.kt`, `AuditAndAddendumHarnessTest.kt`, `UiFilterVaultTest.kt`, and `AllPagesUiRobolectricTest.kt` to reflect the `"due."` typo fix and `"Tap to zoom, hold to open ledger"` chart hint.
+6. **5.6 Automated Gesture Drift Guard (`Phase5HelpAccuracyTest.kt`)**:
+   - Added 5 Robolectric tests in `Phase5HelpAccuracyTest.kt`, including `test5_6_helpEntriesMentioningGestures_haveMatchingHandlerAndCustomAction` which scans every help entry for gesture keywords (`swipe`, `long-press`, `hold`, `drag`) and verifies both source-level handlers and live Compose `SemanticsActions.CustomActions` / `SemanticsActions.OnLongClick` on the target screen, failing immediately if any help entry mentions an unbacked gesture.
+
+

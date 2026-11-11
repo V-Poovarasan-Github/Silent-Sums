@@ -850,7 +850,7 @@ class AllPagesUiRobolectricTest {
         composeTestRule.onNodeWithText("Tap for in & out").assertDoesNotExist()
 
         // Check Trend chart hint
-        composeTestRule.scrollToDashboardText("Long-press bars for exact dates").assertExists()
+        composeTestRule.scrollToDashboardText("Tap to zoom, hold to open ledger").assertExists()
     }
 
     @Test

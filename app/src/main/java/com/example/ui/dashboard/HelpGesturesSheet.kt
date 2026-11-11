@@ -102,7 +102,7 @@ val AUDITED_AFFORDANCES: List<GestureHelpItem> = listOf(
         icon = "💳",
         screen = "Dashboard",
         gesture = "Pay Credit Card Due?",
-        result = "Credit Card Rows: TAP opens ledger; HOLD opens a pre-filled transfer of the amount due..",
+        result = "Credit Card Rows: TAP opens ledger; HOLD opens a pre-filled transfer of the amount due.",
         section = HelpSection.DASHBOARD
     ),
     GestureHelpItem(
@@ -282,6 +282,9 @@ val COMMON_TASKS_AFFORDANCES: List<GestureHelpItem> = listOf(
     )
 )
 
+const val TALKBACK_HELP_NOTE =
+    "With TalkBack, use the Actions menu on rows and cards instead of swiping or holding."
+
 object HelpGesturesCatalog {
     val AUDITED_AFFORDANCES: List<GestureHelpItem> = com.example.ui.dashboard.AUDITED_AFFORDANCES
     val COMMON_TASKS_AFFORDANCES: List<GestureHelpItem> = com.example.ui.dashboard.COMMON_TASKS_AFFORDANCES
@@ -348,6 +351,17 @@ fun HelpGesturesSheet(
                     .testTag("help_gestures_scroll_list"),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Text(
+                    text = TALKBACK_HELP_NOTE,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 2.dp)
+                        .testTag("help_gestures_talkback_note")
+                )
                 if (section == HelpSection.ALL) {
                     val groupedSections = listOf(
                         Triple("Settings & Common Tasks", "help_section_header_settings", COMMON_TASKS_AFFORDANCES),

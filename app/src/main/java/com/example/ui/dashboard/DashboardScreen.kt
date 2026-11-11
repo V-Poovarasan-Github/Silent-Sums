@@ -3591,7 +3591,7 @@ private fun RunningBalanceBarChart(
                 modifier = Modifier.testTag("trend_card_title")
             )
             Text(
-                text = "Long-press bars for exact dates",
+                text = "Tap to zoom, hold to open ledger",
                 fontSize = 10.sp,
                 color = TextMuted,
                 modifier = Modifier.testTag("trend_card_hint")
