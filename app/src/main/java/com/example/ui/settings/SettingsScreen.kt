@@ -48,6 +48,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -394,7 +397,7 @@ fun SettingsScreen(
                 }
 
                 // 2. Preferences Section
-                Text("Preferences", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                Text("Preferences", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary, modifier = Modifier.semantics { heading() })
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -510,7 +513,9 @@ fun SettingsScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
                                 ),
-                                modifier = Modifier.testTag("settings_auto_source_toggle")
+                                modifier = Modifier
+                                    .testTag("settings_auto_source_toggle")
+                                    .semantics { stateDescription = if (isAutoSourceDevice) "On" else "Off" }
                             )
                         }
 
@@ -534,7 +539,10 @@ fun SettingsScreen(
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
+                                ),
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (state.settings.soundHapticsEnabled) "On" else "Off"
+                                }
                             )
                         }
 
@@ -559,7 +567,11 @@ fun SettingsScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
                                 ),
-                                modifier = Modifier.testTag("budgets_card_switch")
+                                modifier = Modifier
+                                    .testTag("budgets_card_switch")
+                                    .semantics {
+                                        stateDescription = if (state.settings.budgetsCardVisible) "On" else "Off"
+                                    }
                             )
                         }
 
@@ -588,7 +600,11 @@ fun SettingsScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
                                 ),
-                                modifier = Modifier.testTag("help_visible_switch")
+                                modifier = Modifier
+                                    .testTag("help_visible_switch")
+                                    .semantics {
+                                        stateDescription = if (state.settings.helpVisible) "On" else "Off"
+                                    }
                             )
                         }
 
@@ -637,7 +653,11 @@ fun SettingsScreen(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
                                 ),
-                                modifier = Modifier.testTag("due_reminders_switch")
+                                modifier = Modifier
+                                    .testTag("due_reminders_switch")
+                                    .semantics {
+                                        stateDescription = if (state.settings.dueRemindersEnabled) "On" else "Off"
+                                    }
                             )
                         }
 
@@ -685,7 +705,7 @@ fun SettingsScreen(
                 }
 
                 // 3. Security & Privacy
-                Text("Security & Privacy", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                Text("Security & Privacy", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary, modifier = Modifier.semantics { heading() })
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -719,7 +739,10 @@ fun SettingsScreen(
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
+                                ),
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (state.settings.lockEnabled) "On" else "Off"
+                                }
                             )
                         }
 
@@ -790,14 +813,17 @@ fun SettingsScreen(
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
+                                ),
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (state.settings.hideBalances) "On" else "Off"
+                                }
                             )
                         }
                     }
                 }
 
                 // 4. Data & Backups
-                Text("Data & Backups", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                Text("Data & Backups", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary, modifier = Modifier.semantics { heading() })
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
@@ -1008,7 +1034,10 @@ fun SettingsScreen(
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary
-                                )
+                                ),
+                                modifier = Modifier.semantics {
+                                    stateDescription = if (state.settings.autoBackupEnabled) "On" else "Off"
+                                }
                             )
                         }
 
@@ -1031,7 +1060,10 @@ fun SettingsScreen(
                                     colors = SwitchDefaults.colors(
                                         checkedThumbColor = Color.White,
                                         checkedTrackColor = MaterialTheme.colorScheme.primary
-                                    )
+                                    ),
+                                    modifier = Modifier.semantics {
+                                        stateDescription = if (state.settings.autoSaveOnClose) "On" else "Off"
+                                    }
                                 )
                             }
                         }

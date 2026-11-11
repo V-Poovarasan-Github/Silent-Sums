@@ -55,7 +55,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33], qualifiers = "w411dp-h891dp-420dpi")
+@Config(sdk = [34], qualifiers = "w411dp-h891dp-420dpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class Phase4AAccessibilityTest {
 

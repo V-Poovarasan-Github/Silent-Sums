@@ -4610,38 +4610,46 @@ class UiFilterVaultTest {
             var activeEntryVm by androidx.compose.runtime.mutableStateOf<com.example.ui.entry.EntryViewModel?>(null)
             var transferPrefillCalls = 0
             var mountHost by androidx.compose.runtime.mutableStateOf(true)
+            var testNoticeDispatcher: com.example.ui.common.SingleFlightNoticeDispatcher? = null
 
             composeTestRule.setContent {
                 val appSettings by settingsRepository.settingsFlow.collectAsState(
                     initial = com.example.data.datastore.AppSettings(currencySymbol = "₹")
                 )
-                MyApplicationTheme(darkTheme = false) {
-                    if (mountHost) {
-                        val currentEntryVm = activeEntryVm
-                        if (currentEntryVm != null) {
-                            com.example.ui.entry.EntryScreen(
-                                viewModel = currentEntryVm,
-                                onNavigateBack = { activeEntryVm = null },
-                                onAddSource = {},
-                                hideBalances = appSettings.hideBalances,
-                                hapticsEnabled = appSettings.soundHapticsEnabled
-                            )
-                        } else {
-                            DashboardScreen(
-                                viewModel = dashboardVm,
-                                onNavigateToExpenses = { _, _ -> },
-                                onNavigateToTransferPrefill = { fromId, toId, amountText ->
-                                    transferPrefillCalls++
-                                    activeEntryVm = com.example.ui.entry.EntryViewModel(
-                                        repository = repository,
-                                        initialSourceId = fromId,
-                                        initialToAccountId = toId,
-                                        initialType = "TRANSFER",
-                                        initialAmountText = amountText,
-                                        settingsRepository = settingsRepository
-                                    )
-                                }
-                            )
+                val dispatcher = com.example.ui.common.rememberSingleFlightNoticeDispatcher()
+                testNoticeDispatcher = dispatcher
+                androidx.compose.runtime.CompositionLocalProvider(
+                    com.example.ui.common.LocalNoticeDispatcher provides dispatcher
+                ) {
+                    MyApplicationTheme(darkTheme = false) {
+                        if (mountHost) {
+                            val currentEntryVm = activeEntryVm
+                            if (currentEntryVm != null) {
+                                com.example.ui.entry.EntryScreen(
+                                    viewModel = currentEntryVm,
+                                    onNavigateBack = { activeEntryVm = null },
+                                    onAddSource = {},
+                                    hideBalances = appSettings.hideBalances,
+                                    hapticsEnabled = appSettings.soundHapticsEnabled
+                                )
+                            } else {
+                                DashboardScreen(
+                                    viewModel = dashboardVm,
+                                    onNavigateToExpenses = { _, _ -> },
+                                    onNavigateToTransferPrefill = { fromId, toId, amountText ->
+                                        transferPrefillCalls++
+                                        activeEntryVm = com.example.ui.entry.EntryViewModel(
+                                            repository = repository,
+                                            initialSourceId = fromId,
+                                            initialToAccountId = toId,
+                                            initialType = "TRANSFER",
+                                            initialAmountText = amountText,
+                                            settingsRepository = settingsRepository
+                                        )
+                                    },
+                                    noticeDispatcher = dispatcher
+                                )
+                            }
                         }
                     }
                 }
@@ -4731,7 +4739,8 @@ class UiFilterVaultTest {
             ShadowLooper.idleMainLooper()
             composeTestRule.waitForIdle()
 
-            assertEquals("F22c: Long-press on overpaid card must show 'No payment needed' toast", "No payment needed", org.robolectric.shadows.ShadowToast.getTextOfLatestToast())
+            val noticeMsg1 = testNoticeDispatcher?.snackbarHostState?.currentSnackbarData?.visuals?.message ?: org.robolectric.shadows.ShadowToast.getTextOfLatestToast()
+            assertEquals("F22c: Long-press on overpaid card must show 'No payment needed' notice", "No payment needed", noticeMsg1)
             assertEquals("F22c: Long-press on overpaid card must NOT open transfer sheet", 0, transferPrefillCalls)
             assertNull("F22c: activeEntryVm must remain null after long-pressing overpaid card", activeEntryVm)
 
@@ -4797,7 +4806,8 @@ class UiFilterVaultTest {
             performRowLongPress("source_row_$cardOwedId")
             ShadowLooper.idleMainLooper()
             composeTestRule.waitForIdle()
-            assertEquals("F22c: Long-press on zero-balance card must show 'No payment needed' toast", "No payment needed", org.robolectric.shadows.ShadowToast.getTextOfLatestToast())
+            val noticeMsg2 = testNoticeDispatcher?.snackbarHostState?.currentSnackbarData?.visuals?.message ?: org.robolectric.shadows.ShadowToast.getTextOfLatestToast()
+            assertEquals("F22c: Long-press on zero-balance card must show 'No payment needed' notice", "No payment needed", noticeMsg2)
             assertEquals("F22c: Long-press on zero-balance card must NOT open transfer sheet", 1, transferPrefillCalls)
             assertNull("F22c: activeEntryVm must remain null", activeEntryVm)
 

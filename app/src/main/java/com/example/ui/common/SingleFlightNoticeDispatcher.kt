@@ -16,6 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -153,7 +156,9 @@ fun SingleFlightSnackbarHost(
 ) {
     SnackbarHost(
         hostState = dispatcher.snackbarHostState,
-        modifier = modifier.testTag("single_flight_snackbar_host")
+        modifier = modifier
+            .semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite }
+            .testTag("single_flight_snackbar_host")
     ) { snackbarData ->
         key(snackbarData) {
             val dismissState = rememberSwipeToDismissBoxState(

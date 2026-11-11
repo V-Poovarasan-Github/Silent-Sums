@@ -48,6 +48,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -420,6 +427,13 @@ fun LockScreen(
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .offset(x = shakeOffset.value.dp)
+                            .semantics {
+                                liveRegion = if (isLockedOut) {
+                                    androidx.compose.ui.semantics.LiveRegionMode.Polite
+                                } else {
+                                    androidx.compose.ui.semantics.LiveRegionMode.Assertive
+                                }
+                            }
                             .testTag(if (isLockedOut) "lockout_countdown_text" else "lock_error_text")
                     )
                 }
@@ -448,13 +462,22 @@ fun LockScreen(
                         rowKeys.forEach { key ->
                             val isBiometricKey = key == "BIOMETRIC"
                             val keyEnabled = key.isNotBlank() && (isBiometricKey || !isKeypadDisabled)
+                            val keyLabel = when (key) {
+                                "BACKSPACE" -> "Delete last digit"
+                                "BIOMETRIC" -> "Unlock with fingerprint"
+                                else -> key
+                            }
                             Box(
                                 modifier = Modifier
                                     .size(68.dp)
                                     .clip(CircleShape)
                                     .background(if (key.isNotBlank()) Navy800 else Color.Transparent)
                                     .alpha(if (key.isNotBlank() && !keyEnabled) 0.4f else 1f)
-                                    .clickable(enabled = keyEnabled) {
+                                    .clickable(
+                                        enabled = keyEnabled,
+                                        role = androidx.compose.ui.semantics.Role.Button,
+                                        onClickLabel = if (key.isNotBlank()) keyLabel else null
+                                    ) {
                                         when (key) {
                                             "BIOMETRIC" -> {
                                                 if (!isLockedOut) {
@@ -472,6 +495,12 @@ fun LockScreen(
                                             else -> handleKeyPress(key)
                                         }
                                     }
+                                    .semantics {
+                                        if (key.isNotBlank()) {
+                                            role = androidx.compose.ui.semantics.Role.Button
+                                            contentDescription = keyLabel
+                                        }
+                                    }
                                     .testTag(if (key.isNotBlank()) "keypad_key_$key" else "keypad_empty"),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -486,7 +515,7 @@ fun LockScreen(
                                     )
                                     "BACKSPACE" -> Icon(
                                         imageVector = AppIcons.Backspace,
-                                        contentDescription = "Backspace",
+                                        contentDescription = "Delete last digit",
                                         tint = SoftBlue,
                                         modifier = Modifier.size(22.dp)
                                     )
@@ -519,6 +548,14 @@ fun LockScreen(
                     modifier = Modifier
                         .fillMaxWidth(0.85f)
                         .height(48.dp)
+                        .semantics {
+                            stateDescription = when {
+                                isLockedOut -> "Locked out"
+                                isKeypadDisabled -> "Disabled, loading"
+                                enteredPin.length < 4 -> "Disabled, enter at least 4 digits"
+                                else -> "Ready to unlock"
+                            }
+                        }
                         .testTag("unlock_confirm_button")
                 ) {
                     Text("Unlock", fontSize = 15.sp, fontWeight = FontWeight.Bold)

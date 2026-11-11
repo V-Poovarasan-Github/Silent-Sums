@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -137,9 +138,13 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import com.example.ui.common.LocalNoticeDispatcher
 import com.example.ui.common.rememberSingleFlightNoticeDispatcher
 import android.provider.Settings
@@ -200,9 +205,18 @@ fun Modifier.animatedBar(barId: Any, isVertical: Boolean = false): Modifier {
     }
 }
 
+val LocalHideBalances = compositionLocalOf { false }
+
 @Composable
 private fun IntroLeaf(content: @Composable () -> Unit) {
-    content()
+    val hideBalances = LocalHideBalances.current
+    if (hideBalances) {
+        Box(modifier = Modifier.semantics { contentDescription = "hidden" }) {
+            content()
+        }
+    } else {
+        content()
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -352,6 +366,7 @@ fun DashboardScreen(
         return
     }
 
+    CompositionLocalProvider(LocalHideBalances provides state.hideBalances) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -418,6 +433,9 @@ fun DashboardScreen(
                             color = MaterialTheme.colorScheme.tertiaryContainer,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = "Demo mode: Viewing sample data"
+                                }
                                 .testTag("demo_banner")
                         ) {
                             Row(
@@ -668,6 +686,9 @@ fun DashboardScreen(
                                     letterSpacing = (-0.5).sp,
                                     modifier = Modifier
                                         .semantics {
+                                            if (state.hideBalances) {
+                                                contentDescription = "hidden"
+                                            }
                                             customActions = listOf(
                                                 CustomAccessibilityAction("View balance breakdown") {
                                                     showBalanceBreakdown = true
@@ -788,7 +809,7 @@ fun DashboardScreen(
                                     ) {
                                         Icon(
                                             imageVector = if (isUp) AppIcons.ArrowUpward else AppIcons.ArrowDownward,
-                                            contentDescription = null,
+                                            contentDescription = if (isUp) "Increased" else "Decreased",
                                             tint = if (isUp) IncomeGreen else ExpenseRed,
                                             modifier = Modifier.size(12.dp)
                                         )
@@ -1205,7 +1226,7 @@ fun DashboardScreen(
                                     ) {
                                         Icon(
                                             imageVector = if (isDown) AppIcons.ArrowDownward else AppIcons.ArrowUpward,
-                                            contentDescription = null,
+                                            contentDescription = if (isDown) "Decreased" else "Increased",
                                             tint = if (isDown) IncomeGreen else ExpenseRed,
                                             modifier = Modifier.size(12.dp)
                                         )
@@ -1734,7 +1755,8 @@ fun DashboardScreen(
                             text = "Sources & Net Balances",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = TextPrimary
+                            color = TextPrimary,
+                            modifier = Modifier.semantics { heading() }
                         )
                         val effMonths = effectiveFilterMonths
                         val sourcesSubLabel = when {
@@ -1756,12 +1778,19 @@ fun DashboardScreen(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
-                                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                                modifier = Modifier
+                                    .padding(top = 4.dp, bottom = 2.dp)
+                                    .semantics { heading() }
                             )
                             yourMoney.forEach { accItem ->
                                 val accBudget = state.calculatedBudgets.find {
                                     it.budget.scopeType.equals("ACCOUNT", ignoreCase = true) &&
                                     it.budget.targetName.equals(accItem.account.name, ignoreCase = true)
+                                }
+                                val sourceSummary = if (state.hideBalances) {
+                                    "${accItem.account.name}, balance hidden"
+                                } else {
+                                    "${accItem.account.name}, balance ${formatMoney(accItem.currentBalance)}"
                                 }
                                 val hasBudgetChip = state.budgetsCardVisible && accBudget != null
                                 if (hasBudgetChip && accBudget != null) {
@@ -1781,7 +1810,8 @@ fun DashboardScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .raisedChildLayer(10.dp)
-                                            .semantics {
+                                            .semantics(mergeDescendants = true) {
+                                                contentDescription = sourceSummary
                                                 customActions = listOf(
                                                     CustomAccessibilityAction("View in ledger") {
                                                         viewInLedger()
@@ -1850,10 +1880,17 @@ fun DashboardScreen(
                                                 BudgetTintTier.EIGHTY_TO_99 -> Color(0xFFF59E0B)
                                                 BudgetTintTier.HUNDRED_OR_ABOVE -> Color(0xFFEF4444)
                                             }
+                                            val chipStatus = when (accBudget.tier) {
+                                                BudgetTintTier.BELOW_80 -> "under limit"
+                                                BudgetTintTier.EIGHTY_TO_99 -> "near limit"
+                                                BudgetTintTier.HUNDRED_OR_ABOVE -> "over limit"
+                                            }
                                             Surface(
                                                 shape = RoundedCornerShape(4.dp),
                                                 color = chipColor.copy(alpha = 0.14f),
-                                                modifier = Modifier.testTag("source_budget_chip_${accItem.account.id}")
+                                                modifier = Modifier
+                                                    .testTag("source_budget_chip_${accItem.account.id}")
+                                                    .semantics { stateDescription = chipStatus }
                                             ) {
                                                 IntroLeaf {
                                                     Text(
@@ -1894,7 +1931,8 @@ fun DashboardScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .raisedChildLayer(10.dp)
-                                            .semantics {
+                                            .semantics(mergeDescendants = true) {
+                                                contentDescription = sourceSummary
                                                 customActions = listOf(
                                                     CustomAccessibilityAction("View in ledger") {
                                                         viewInLedger()
@@ -1979,12 +2017,19 @@ fun DashboardScreen(
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                                modifier = Modifier
+                                    .padding(top = 8.dp, bottom = 2.dp)
+                                    .semantics { heading() }
                             )
                             val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
                             cardMoney.forEach { cardItem ->
                                 val netDebt = -cardItem.currentBalance
                                 val debt = if (netDebt > 0.0) netDebt else 0.0
+                                val cardSummary = if (state.hideBalances) {
+                                    "${cardItem.account.name}, Credit card, balance hidden"
+                                } else {
+                                    "${cardItem.account.name}, Credit card, net debt ${formatMoney(debt)}"
+                                }
 
                                 val payDueAction = {
                                     if (appSettings.soundHapticsEnabled) {
@@ -1995,7 +2040,6 @@ fun DashboardScreen(
                                             key = "NO_PAYMENT_NEEDED_${cardItem.account.id}",
                                             message = "No payment needed"
                                         )
-                                        android.widget.Toast.makeText(context, "No payment needed", android.widget.Toast.LENGTH_SHORT).show()
                                     } else {
                                         val dueAmountText = String.format(Locale.US, "%.2f", netDebt)
                                         val lastPayingSourceId = state.allTransactions
@@ -2035,7 +2079,8 @@ fun DashboardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .raisedChildLayer(10.dp)
-                                        .semantics {
+                                        .semantics(mergeDescendants = true) {
+                                            contentDescription = cardSummary
                                             customActions = listOf(
                                                 CustomAccessibilityAction("Pay due via transfer") {
                                                     payDueAction()
@@ -2207,7 +2252,8 @@ fun DashboardScreen(
                                     text = "Monthly Budgets",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
-                                    color = TextPrimary
+                                    color = TextPrimary,
+                                    modifier = Modifier.semantics { heading() }
                                 )
                             }
                             if (state.calculatedBudgets.size > 3) {
@@ -2278,11 +2324,21 @@ fun DashboardScreen(
                                     editBudgetText = if (targetCb.limit % 1.0 == 0.0) targetCb.limit.toLong().toString() else String.format(Locale.US, "%.2f", targetCb.limit)
                                 }
 
+                                val budgetHealthStatus = when {
+                                    cb.isOverLimit -> "over limit"
+                                    (cb.spent / cb.limit.coerceAtLeast(1.0)) >= 0.8 -> "near limit"
+                                    else -> "under limit"
+                                }
+                                val percentSpent = ((cb.spent / cb.limit.coerceAtLeast(1.0)) * 100).toInt()
+                                val budgetSentence = "${cb.budget.name}, budget ${formatMoney(cb.limit)}, spent ${formatMoney(cb.spent)}, $percentSpent percent, $budgetHealthStatus"
+
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .raisedChildLayer(10.dp)
-                                        .semantics {
+                                        .semantics(mergeDescendants = true) {
+                                            contentDescription = budgetSentence
+                                            stateDescription = budgetHealthStatus
                                             customActions = listOf(
                                                 CustomAccessibilityAction("View transactions") {
                                                     viewTransactionsAction()
@@ -2710,7 +2766,8 @@ fun DashboardScreen(
                             text = insightsTitle,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = TextPrimary,
+                            modifier = Modifier.semantics { heading() }
                         )
                     }
 
@@ -3190,6 +3247,7 @@ fun DashboardScreen(
         val b = editingBudget!!
         AlertDialog(
             onDismissRequest = { editingBudget = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
             title = { Text("Edit Budget: ${b.budget.name}", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -3243,6 +3301,7 @@ fun DashboardScreen(
             section = HelpSection.DASHBOARD,
             onDismiss = { showHelpSheet = false }
         )
+    }
     }
 }
 
@@ -3690,7 +3749,7 @@ private fun RunningBalanceBarChart(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
+                    .heightIn(min = 130.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
                 contentAlignment = Alignment.Center
@@ -4430,7 +4489,7 @@ private fun SixMonthsGroupedBarChart(
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .height(100.dp),
+                .heightIn(min = 100.dp),
             contentAlignment = Alignment.Center
         ) {
             val periodText = if (monthlyList.size > 1) "in the last ${monthlyList.size} months" else "for this month"
@@ -4455,7 +4514,7 @@ private fun SixMonthsGroupedBarChart(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(130.dp)
+            .heightIn(min = 130.dp)
             .padding(top = 8.dp),
         horizontalArrangement = if (monthlyList.size <= 3) Arrangement.SpaceEvenly else Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom

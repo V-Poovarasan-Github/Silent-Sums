@@ -30,7 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import kotlin.math.roundToInt
@@ -364,7 +368,7 @@ fun LedgerScreen(
                     ),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .heightIn(min = 48.dp)
                         .testTag("ledger_search_field")
                 )
 
@@ -374,7 +378,7 @@ fun LedgerScreen(
                     modifier = Modifier
                         .size(48.dp)
                         .liquidGlass(12.dp)
-                        .clickable { showCalculator = true }
+                        .clickable(role = Role.Button) { showCalculator = true }
                         .testTag("ledger_calculator_btn")
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -478,7 +482,10 @@ fun LedgerScreen(
                                         fontSize = 13.sp,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp)
+                                            .semantics { heading() }
                                     )
                                     val dayTotalStr = Formatters.formatMoney(
                                         amount = dayGroup.dayTotal,
@@ -495,6 +502,11 @@ fun LedgerScreen(
                                             dayGroup.dayTotal > 0 -> IncomeGreen
                                             dayGroup.dayTotal < 0 -> ExpenseRed
                                             else -> TransferGray
+                                        },
+                                        modifier = Modifier.semantics {
+                                            if (state.hideBalances) {
+                                                contentDescription = "hidden"
+                                            }
                                         }
                                     )
                                 }
@@ -549,6 +561,9 @@ fun LedgerScreen(
                                                     .clip(RoundedCornerShape(12.dp))
                                                     .background(ExpenseRed)
                                                     .testTag("ledger_delete_band")
+                                                    .semantics {
+                                                        contentDescription = "Delete"
+                                                    }
                                                     .clickable(
                                                         interactionSource = remember { MutableInteractionSource() },
                                                         indication = null
@@ -768,6 +783,20 @@ fun TransactionCardRow(
         amountText to balStr
     }
 
+    val typeLabel = when (transaction.type.uppercase()) {
+        "INCOME" -> "Income"
+        "EXPENSE" -> "Expense"
+        "TRANSFER" -> "Transfer"
+        else -> transaction.type
+    }
+    val catLabel = transaction.category?.name ?: "Uncategorized"
+    val descLabel = transaction.description.ifBlank { typeLabel }
+    val rowDescription = if (hideBalances) {
+        "$descLabel, $catLabel, $typeLabel, amount hidden, balance hidden"
+    } else {
+        "$descLabel, $catLabel, $typeLabel, amount $amountText, balance $balStr"
+    }
+
     val rowCustomActions = remember(transaction.id, onClick, onDelete) {
         listOfNotNull(
             onDelete?.let { del ->
@@ -790,7 +819,8 @@ fun TransactionCardRow(
         modifier = modifier
             .fillMaxWidth()
             .liquidGlass(12.dp)
-            .semantics {
+            .semantics(mergeDescendants = true) {
+                contentDescription = rowDescription
                 if (rowCustomActions.isNotEmpty()) {
                     customActions = rowCustomActions
                 }
@@ -934,7 +964,13 @@ fun TransactionCardRow(
                         maxLines = 1,
                         softWrap = false,
                         color = amountColor,
-                        modifier = Modifier.testTag("tx_amount_${transaction.id}")
+                        modifier = Modifier
+                            .testTag("tx_amount_${transaction.id}")
+                            .semantics {
+                                if (hideBalances) {
+                                    contentDescription = "hidden"
+                                }
+                            }
                     )
 
                     Text(
@@ -943,7 +979,13 @@ fun TransactionCardRow(
                         maxLines = 1,
                         softWrap = false,
                         color = TextMuted,
-                        modifier = Modifier.testTag("tx_bal_${transaction.id}")
+                        modifier = Modifier
+                            .testTag("tx_bal_${transaction.id}")
+                            .semantics {
+                                if (hideBalances) {
+                                    contentDescription = "hidden"
+                                }
+                            }
                     )
 
                     metaContent(Modifier.testTag("tx_meta_${transaction.id}"))
@@ -1176,6 +1218,18 @@ fun SplitGroupCardRow(
 
     val expandActionLabel = if (isExpanded) "Collapse" else "Expand"
     val deleteActionLabel = "Delete all ${splitGroup.lines.size} split lines"
+    val groupTypeLabel = when (splitGroup.type.uppercase()) {
+        "INCOME" -> "Income"
+        "EXPENSE" -> "Expense"
+        else -> splitGroup.type
+    }
+    val groupAmountFormatted = Formatters.formatMoney(splitGroup.totalAmount, isMasked = hideBalances, currencySymbol = currencySymbol)
+    val groupSummary = if (hideBalances) {
+        "${splitGroup.description}, Split group, ${splitGroup.lines.size} lines, $groupTypeLabel, amount hidden"
+    } else {
+        "${splitGroup.description}, Split group, ${splitGroup.lines.size} lines, $groupTypeLabel, amount $groupAmountFormatted"
+    }
+
     val groupCustomActions = remember(splitGroup.groupId, isExpanded, splitGroup.lines.size, onToggleExpand, onEditGroup, onDeleteGroup) {
         listOfNotNull(
             CustomAccessibilityAction(expandActionLabel) {
@@ -1202,7 +1256,8 @@ fun SplitGroupCardRow(
         modifier = modifier
             .fillMaxWidth()
             .liquidGlass(12.dp)
-            .semantics {
+            .semantics(mergeDescendants = true) {
+                contentDescription = groupSummary
                 if (groupCustomActions.isNotEmpty()) {
                     customActions = groupCustomActions
                 }

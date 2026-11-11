@@ -38,9 +38,13 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -276,7 +280,8 @@ fun ListsScreen(
                                 text = "Active Categories",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = TextPrimary,
+                                modifier = Modifier.semantics { heading() }
                             )
                             Button(
                                 onClick = { showAddCategoryDialog = true },
@@ -418,7 +423,8 @@ fun ListsScreen(
                                 text = "Sources Ledger",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = TextPrimary,
+                                modifier = Modifier.semantics { heading() }
                             )
                             Button(
                                 onClick = { showAddAccountDialog = true },
@@ -472,7 +478,8 @@ fun ListsScreen(
                                 text = "Custom Ledger Fields",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = TextPrimary,
+                                modifier = Modifier.semantics { heading() }
                             )
                             Button(
                                 onClick = { showAddFieldDialog = true },
@@ -514,7 +521,8 @@ fun ListsScreen(
                                     text = "Monthly Spending Limits",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = TextPrimary,
+                                    modifier = Modifier.semantics { heading() }
                                 )
                                 Text("Caps by category, source, or overall", fontSize = 11.sp, color = TextMuted)
                             }
@@ -611,10 +619,10 @@ fun ListsScreen(
                                             color = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.padding(end = 8.dp)
                                         )
-                                        IconButton(onClick = { budgetToEdit = budget }, modifier = Modifier.size(32.dp).testTag("edit_budget_${budget.id}")) {
+                                        IconButton(onClick = { budgetToEdit = budget }, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp).testTag("edit_budget_${budget.id}")) {
                                             Icon(Icons.Default.Edit, contentDescription = "Edit Budget", tint = TextMuted, modifier = Modifier.size(16.dp))
                                         }
-                                        IconButton(onClick = { budgetToDelete = budget }, modifier = Modifier.size(32.dp).testTag("delete_budget_${budget.id}")) {
+                                        IconButton(onClick = { budgetToDelete = budget }, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp).testTag("delete_budget_${budget.id}")) {
                                             Icon(Icons.Default.Delete, contentDescription = "Delete Budget", tint = ExpenseRed, modifier = Modifier.size(16.dp))
                                         }
                                     }
@@ -898,6 +906,9 @@ fun CategoryItemRow(
         modifier = modifier
             .fillMaxWidth()
             .liquidGlass(12.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${category.name}, Category, $txCount ledger transactions"
+            }
     ) {
         Column(
             modifier = Modifier
@@ -936,19 +947,19 @@ fun CategoryItemRow(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onMoveUp, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(AppIcons.ArrowUpward, contentDescription = "Move Up", modifier = Modifier.size(16.dp), tint = TextMuted)
                     }
-                    IconButton(onClick = onMoveDown, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onMoveDown, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(AppIcons.ArrowDownward, contentDescription = "Move Down", modifier = Modifier.size(16.dp), tint = TextMuted)
                     }
-                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onEdit, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp), tint = TextSecondary)
                     }
-                    IconButton(onClick = onArchive, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onArchive, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(AppIcons.Archive, contentDescription = "Archive", modifier = Modifier.size(16.dp), tint = Amber500)
                     }
-                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onDelete, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                     }
                 }
@@ -990,6 +1001,13 @@ fun AccountItemCard(
         else -> MaterialTheme.colorScheme.primary
     }
 
+    val currentBalanceFormatted = Formatters.formatMoney(accountWithBalance.currentBalance, isMasked = hideBalances, currencySymbol = currencySymbol)
+    val cardDescription = if (hideBalances) {
+        "${acc.name}, $badgeLabel account, hidden balance"
+    } else {
+        "${acc.name}, $badgeLabel account, balance $currentBalanceFormatted"
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -999,6 +1017,9 @@ fun AccountItemCard(
         modifier = modifier
             .fillMaxWidth()
             .liquidGlass(12.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = cardDescription
+            }
     ) {
         Row(
             modifier = Modifier
@@ -1068,19 +1089,19 @@ fun AccountItemCard(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onEdit, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onEdit, modifier = Modifier.minimumInteractiveComponentSize().size(34.dp)) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(18.dp), tint = TextSecondary)
                 }
                 if (acc.archived) {
-                    IconButton(onClick = onRestore, modifier = Modifier.size(34.dp)) {
+                    IconButton(onClick = onRestore, modifier = Modifier.minimumInteractiveComponentSize().size(34.dp)) {
                         Icon(AppIcons.Restore, contentDescription = "Restore", modifier = Modifier.size(18.dp), tint = IncomeGreen)
                     }
                 } else {
-                    IconButton(onClick = onArchive, modifier = Modifier.size(34.dp)) {
+                    IconButton(onClick = onArchive, modifier = Modifier.minimumInteractiveComponentSize().size(34.dp)) {
                         Icon(AppIcons.Archive, contentDescription = "Archive", modifier = Modifier.size(18.dp), tint = Amber500)
                     }
                 }
-                IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
+                IconButton(onClick = onDelete, modifier = Modifier.minimumInteractiveComponentSize().size(34.dp)) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.error)
                 }
             }
@@ -1144,10 +1165,10 @@ fun CustomFieldCard(
                 }
 
                 Row {
-                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onEdit, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp), tint = TextSecondary)
                     }
-                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onDelete, modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
                     }
                 }
@@ -1605,8 +1626,11 @@ fun BudgetEditDialog(
                             readOnly = true,
                             label = { Text("Select Category") },
                             trailingIcon = {
-                                IconButton(onClick = { expandedTarget = !expandedTarget }) {
-                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                IconButton(
+                                    onClick = { expandedTarget = !expandedTarget },
+                                    modifier = Modifier.minimumInteractiveComponentSize()
+                                ) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Category")
                                 }
                             },
                             modifier = Modifier
@@ -1640,8 +1664,11 @@ fun BudgetEditDialog(
                             readOnly = true,
                             label = { Text("Select Source") },
                             trailingIcon = {
-                                IconButton(onClick = { expandedTarget = !expandedTarget }) {
-                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                IconButton(
+                                    onClick = { expandedTarget = !expandedTarget },
+                                    modifier = Modifier.minimumInteractiveComponentSize()
+                                ) {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Select Source")
                                 }
                             },
                             modifier = Modifier

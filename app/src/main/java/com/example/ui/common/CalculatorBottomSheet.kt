@@ -43,6 +43,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import com.example.domain.calculator.ExpressionEvaluator
 import java.text.DecimalFormat
 
@@ -220,7 +224,13 @@ fun CalculatorBottomSheet(
                 CalcKey("C", Modifier.weight(1f), isSpecial = true, testTag = "calculator_key_c") { clear() }
                 CalcKey("(", Modifier.weight(1f), isSpecial = true, testTag = "calculator_key_lparen") { append("(") }
                 CalcKey(")", Modifier.weight(1f), isSpecial = true, testTag = "calculator_key_rparen") { append(")") }
-                CalcIconKey(AppIcons.Backspace, Modifier.weight(1f), isSpecial = true, testTag = "calculator_key_backspace") { deleteLast() }
+                CalcIconKey(
+                    icon = AppIcons.Backspace,
+                    iconDescription = "Backspace",
+                    modifier = Modifier.weight(1f),
+                    isSpecial = true,
+                    testTag = "calculator_key_backspace"
+                ) { deleteLast() }
             }
 
             Spacer(modifier = Modifier.height(keySpacing))
@@ -351,6 +361,22 @@ private fun CalcKey(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
+    val keyDesc = when (text) {
+        "+" -> "Plus"
+        "-" -> "Minus"
+        "×" -> "Multiply"
+        "÷" -> "Divide"
+        "=" -> "Equals"
+        "." -> "Decimal point"
+        "C" -> "Clear"
+        "AC" -> "All Clear"
+        "+/-" -> "Plus or minus"
+        "%" -> "Percent"
+        "(" -> "Left parenthesis"
+        ")" -> "Right parenthesis"
+        else -> text
+    }
+
     Box(
         modifier = modifier
             .height(56.dp)
@@ -359,7 +385,15 @@ private fun CalcKey(
                 selectedColor = bgColor,
                 cornerRadius = 14.dp
             )
-            .clickable(onClick = onClick)
+            .clickable(
+                onClick = onClick,
+                role = androidx.compose.ui.semantics.Role.Button,
+                onClickLabel = keyDesc
+            )
+            .semantics {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = keyDesc
+            }
             .testTag(testTag),
         contentAlignment = Alignment.Center
     ) {
@@ -375,6 +409,7 @@ private fun CalcKey(
 @Composable
 private fun CalcIconKey(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconDescription: String,
     modifier: Modifier = Modifier,
     isSpecial: Boolean = false,
     testTag: String = "",
@@ -391,13 +426,21 @@ private fun CalcIconKey(
                 selectedColor = bgColor,
                 cornerRadius = 14.dp
             )
-            .clickable(onClick = onClick)
+            .clickable(
+                onClick = onClick,
+                role = Role.Button,
+                onClickLabel = iconDescription
+            )
+            .semantics {
+                role = Role.Button
+                contentDescription = iconDescription
+            }
             .testTag(testTag),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = iconDescription,
             tint = contentColor,
             modifier = Modifier.size(22.dp)
         )

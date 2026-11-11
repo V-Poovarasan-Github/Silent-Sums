@@ -34,11 +34,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.ui.theme.LocalOnThemeChange
 import com.example.ui.theme.LocalThemeSetting
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -192,10 +197,19 @@ fun HeaderIconButton(
     ) {
         Box(
             modifier = Modifier
+                .minimumInteractiveComponentSize()
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(containerColor, CircleShape)
-                .clickable(onClick = onClick)
+                .clickable(
+                    onClick = onClick,
+                    role = androidx.compose.ui.semantics.Role.Button,
+                    onClickLabel = contentDescription
+                )
+                .semantics {
+                    this.contentDescription = contentDescription
+                    this.role = androidx.compose.ui.semantics.Role.Button
+                }
                 .testTag(testTag),
             contentAlignment = Alignment.Center
         ) {

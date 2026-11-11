@@ -25,9 +25,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -464,7 +472,7 @@ fun EntryScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .heightIn(min = 52.dp)
                             .testTag("save_transaction_button")
                     ) {
                         Row(
@@ -527,13 +535,21 @@ fun EntryScreen(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(42.dp)
+                            .heightIn(min = 42.dp)
                             .liquidGlassPill(
                                 selected = isSelected,
                                 selectedColor = if (isSelected) selColor else null,
                                 cornerRadius = 12.dp
                             )
-                            .clickable { viewModel.setType(type) }
+                            .clickable(
+                                role = androidx.compose.ui.semantics.Role.Tab,
+                                onClickLabel = label
+                            ) { viewModel.setType(type) }
+                            .semantics {
+                                role = androidx.compose.ui.semantics.Role.Tab
+                                selected = isSelected
+                                stateDescription = if (isSelected) "Selected" else "Not selected"
+                            }
                             .testTag("type_selector_${type.lowercase()}"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -743,8 +759,20 @@ fun EntryScreen(
                                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(48.dp)
+                                        .heightIn(min = 48.dp)
                                         .clip(RoundedCornerShape(10.dp))
+                                        .semantics {
+                                            role = androidx.compose.ui.semantics.Role.Button
+                                            contentDescription = when (key) {
+                                                "BACKSPACE" -> "Backspace"
+                                                "+" -> "Plus"
+                                                "-" -> "Minus"
+                                                "*" -> "Multiply"
+                                                "/" -> "Divide"
+                                                "." -> "Decimal point"
+                                                else -> key
+                                            }
+                                        }
                                         .clickable {
                                             if (hapticsEnabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             viewModel.onKeypadPress(key)
@@ -999,12 +1027,13 @@ fun EntryScreen(
                                     IconButton(
                                         onClick = { viewModel.removeSplitLine(line.id) },
                                         modifier = Modifier
+                                            .minimumInteractiveComponentSize()
                                             .size(32.dp)
                                             .testTag("split_remove_line_${index}")
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Remove line",
+                                            contentDescription = "Remove line ${index + 1}",
                                             tint = ExpenseRed,
                                             modifier = Modifier.size(18.dp)
                                         )
@@ -1027,6 +1056,9 @@ fun EntryScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .alpha(if (linesEnabled) 1.0f else 0.45f)
+                                    .semantics {
+                                        contentDescription = "Split line ${index + 1} of ${state.splitLines.size} amount"
+                                    }
                                     .testTag("split_amount_${index}")
                             )
 
@@ -1223,6 +1255,9 @@ fun EntryScreen(
                             colors = if (isRecordingVoice) ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer) else ButtonDefaults.outlinedButtonColors(),
                             modifier = Modifier
                                 .weight(1f)
+                                .semantics {
+                                    stateDescription = if (isRecordingVoice) "Recording" else "Stopped"
+                                }
                                 .testTag("entry_voice_btn")
                         ) {
                             Row(
