@@ -1,6 +1,6 @@
 # SilentSums — Parked Features & Scope Decisions
 
-For the full engineering and release development log (including TASK RELEASE-3 Phases 1–6), see [`docs/DEVLOG.md`](docs/DEVLOG.md).
+For the full engineering and release development log (including TASK RELEASE-3 Phases 1–7 and Task F29), see [`docs/DEVLOG.md`](docs/DEVLOG.md).
 
 ## Currently Parked Features
 
@@ -23,3 +23,5 @@ For the full engineering and release development log (including TASK RELEASE-3 P
 5. **WebP Lossy Compression for Receipt Photos**
    - **Status**: Rejected / Parked.
    - **Rationale**: Due to Android API level compatibility variance, receipt attachments use the deterministic 5-rung JPEG compression ladder; voice notes remain at 120s max duration with 64kbps AAC-LC mono.
+
+

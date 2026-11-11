@@ -1530,7 +1530,7 @@ fun DashboardScreen(
                                     Text(
                                         text = debtSummaryText,
                                         color = debtSummaryColor,
-                                        fontSize = 24.sp,
+                                        fontSize = 20.sp,
                                         fontWeight = FontWeight.Black,
                                         modifier = Modifier
                                             .clickable {
@@ -1806,7 +1806,7 @@ fun DashboardScreen(
                                             )
                                         )
                                     }
-                                    Row(
+                                    Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .raisedChildLayer(10.dp)
@@ -1822,32 +1822,32 @@ fun DashboardScreen(
                                             .clickable { viewInLedger() }
                                             .padding(horizontal = 12.dp, vertical = 10.dp)
                                             .testTag("source_row_${accItem.account.id}"),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.Top
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = if (accItem.account.accountType == "CASH") AppIcons.Wallet else AppIcons.AccountBalance,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                        Column(
-                                            modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                                modifier = Modifier.weight(1f).padding(end = 8.dp)
                                             ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (accItem.account.accountType == "CASH") AppIcons.Wallet else AppIcons.AccountBalance,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
                                                 Text(
                                                     text = accItem.account.name,
                                                     fontWeight = FontWeight.SemiBold,
@@ -1855,36 +1855,42 @@ fun DashboardScreen(
                                                     color = TextPrimary,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
-                                                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                                    modifier = Modifier.weight(1f)
                                                 )
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    IntroLeaf {
-                                                        Text(
-                                                            text = formatMoney(accItem.currentBalance),
-                                                            fontWeight = FontWeight.Bold,
-                                                            fontSize = 13.sp,
-                                                            maxLines = 1,
-                                                            color = if (accItem.currentBalance >= 0) IncomeGreen else ExpenseRed
-                                                        )
-                                                    }
-                                                    Icon(
-                                                        imageVector = AppIcons.ChevronRight,
-                                                        contentDescription = null,
-                                                        tint = TextMuted,
-                                                        modifier = Modifier.size(16.dp)
+                                            }
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                IntroLeaf {
+                                                    Text(
+                                                        text = formatMoney(accItem.currentBalance),
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 13.sp,
+                                                        maxLines = 1,
+                                                        color = if (accItem.currentBalance >= 0) IncomeGreen else ExpenseRed
                                                     )
                                                 }
+                                                Icon(
+                                                    imageVector = AppIcons.ChevronRight,
+                                                    contentDescription = null,
+                                                    tint = TextMuted,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
                                             }
-                                            val chipColor = when (accBudget.tier) {
-                                                BudgetTintTier.BELOW_80 -> Color(0xFF10B981)
-                                                BudgetTintTier.EIGHTY_TO_99 -> Color(0xFFF59E0B)
-                                                BudgetTintTier.HUNDRED_OR_ABOVE -> Color(0xFFEF4444)
-                                            }
-                                            val chipStatus = when (accBudget.tier) {
-                                                BudgetTintTier.BELOW_80 -> "under limit"
-                                                BudgetTintTier.EIGHTY_TO_99 -> "near limit"
-                                                BudgetTintTier.HUNDRED_OR_ABOVE -> "over limit"
-                                            }
+                                        }
+                                        val chipColor = when (accBudget.tier) {
+                                            BudgetTintTier.BELOW_80 -> Color(0xFF10B981)
+                                            BudgetTintTier.EIGHTY_TO_99 -> Color(0xFFF59E0B)
+                                            BudgetTintTier.HUNDRED_OR_ABOVE -> Color(0xFFEF4444)
+                                        }
+                                        val chipStatus = when (accBudget.tier) {
+                                            BudgetTintTier.BELOW_80 -> "under limit"
+                                            BudgetTintTier.EIGHTY_TO_99 -> "near limit"
+                                            BudgetTintTier.HUNDRED_OR_ABOVE -> "over limit"
+                                        }
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Surface(
                                                 shape = RoundedCornerShape(4.dp),
                                                 color = chipColor.copy(alpha = 0.14f),

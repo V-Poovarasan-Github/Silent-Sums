@@ -184,3 +184,35 @@
    - Created dedicated vector shortcut icons (`ic_shortcut_add_expense.xml`, `ic_shortcut_add_income.xml`, `ic_shortcut_view_dues.xml`) and updated `shortcuts.xml` so app shortcuts no longer reuse `@drawable/ic_launcher_foreground`.
 6. **6.7 Log Hygiene (`MediaRepository.kt`, `DatabaseProvider.kt`, `SettingsViewModel.kt`, `MediaStoreWriter.kt`, `MainActivity.kt`)**:
    - Audited all 16 `Log.*` calls (0 `println` calls): removed 2 leftover `Log.d` calls in `MediaRepository.kt`, wrapped 12 diagnostic `Log.i`/`Log.w`/`Log.e` calls in `if (BuildConfig.DEBUG)`, and preserved the 2 intentional crash-logger fallback `Log.e` calls in `ExpenseTrackerApp.kt`.
+
+---
+
+## TASK F29 — CREDIT CARD OWED FONT REDUCTION & SOURCE ROW BUDGET ALIGNMENT (`DashboardScreen.kt`, `UiFilterVaultTest.kt`, `NOTES.md`)
+
+1. **F29a — Credit Cards Owed Font (`DashboardScreen.kt`)**:
+   - Reduced `kpi_credit_cards_owed` fontSize from `24.sp` to `20.sp` while keeping `FontWeight.Black` and `ExpenseRed` (when `owed > 0.0`).
+2. **F29b — Source Row WITH Budget (`DashboardScreen.kt`)**:
+   - Updated the `Your Money` source row WITH budget to use an outer `Column` with two full-width `Row(horizontalArrangement = Arrangement.SpaceBetween)` lines: Row 1 renders the 32.dp Icon + Account Name on the left and Current Balance + Chevron on the right; Row 2 places the Budget Chip flush left (directly under the Icon) and Opening Balance flush right (directly under Current Balance).
+3. **F29c — Source Row WITHOUT Budget (`DashboardScreen.kt`)**:
+   - Preserved the existing no-budget source row layout unchanged (Opening Balance stays indented under the Account Name).
+4. **UT29 (`UiFilterVaultTest.kt`)**:
+   - Added `testUT29_creditCardOwedFontReduction_andSourceRowBudgetAlignment` verifying 20.sp owed font size, flush-left chip / flush-right opening balance in a `SpaceBetween` row when a budget exists, and indented opening balance when no budget exists.
+
+---
+
+## TASK RELEASE-3 — PHASE 7: DOCS AND STORE LISTING (`README.md`, `PLAY_STORE_GUIDE.md`, `PRIVACY_POLICY.md`, `docs/DEVLOG.md`)
+
+1. **7.1 `README.md`**:
+   - Removed the *"Prefer the Play Store someday? It's not there on purpose..."* paragraph and the unverified *"Tested on a Redmi and a Samsung M51"* claim.
+   - Standardized on the measured Phase 2 release artifact sizes (`3,187,628 bytes` / `3.04 MiB` / `3.19 MB` APK; `6,776,931 bytes` / `6.46 MiB` / `6.78 MB` AAB).
+   - Added a factual **Security** section covering salted `PBKDF2WithHmacSHA256` PIN hashing (`120,000` iterations, 16-byte salt), persistent exponential brute-force lockout, PIN scrubbing on CSV/JSON export & restore, dynamic `FLAG_SECURE` window protection, `android:allowBackup="false"` cloud/transfer exclusion, and narrowed `FileProvider` cache subdirectories (`cacheDir/share/` and `cacheDir/media_staging/`).
+   - Updated architecture and devlog references to `applicationId = "app.silentsums"`, `Theme.SilentSums`, `docs/DEVLOG.md`, and `PRIVACY_POLICY.md`.
+2. **7.2 `PLAY_STORE_GUIDE.md`**:
+   - Replaced *"encrypted private storage"* with *"private app storage"* (accurately reflecting that the SQLite database lives in the OS-sandboxed app directory while the PIN is hashed with salted PBKDF2-HMAC-SHA256).
+   - Explicitly stated that receipt photos and voice notes are **not** included in CSV backups and are included only in the full JSON backup/restore format.
+   - Added the **Google Play Console — Data Safety Form Answer Sheet** (no data collected, no data shared, no `INTERNET` permission, and explicit note that data is not encrypted in transit because nothing is transmitted).
+   - Added the **Permission Declarations & Contextual Request Rationale** table covering `RECORD_AUDIO`, `POST_NOTIFICATIONS` (with pre-permission rationale dialog), `USE_BIOMETRIC`, `VIBRATE`, and legacy `WRITE_EXTERNAL_STORAGE` (`maxSdkVersion="28"`).
+   - Added a placeholder line for the hosted Privacy Policy HTTPS URL and a complete **Play Store Screenshot Checklist** (Dashboard, Ledger, Entry, Lock screen, Settings) with Google Play Console pixel/aspect-ratio requirements.
+3. **7.3 `PRIVACY_POLICY.md`**:
+   - Created a plain-language privacy policy matching the verified Phase 1–6 implementation: 100% offline (`android.permission.INTERNET` absent), zero analytics or third-party SDKs, all data in private app storage, salted PBKDF2 PIN hash that never leaves the device, `allowBackup="false"`, `FLAG_SECURE` screen protection, contextual permissions, and user-controlled CSV/JSON exports.
+

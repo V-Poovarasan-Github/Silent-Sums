@@ -3561,14 +3561,14 @@ class UiFilterVaultTest {
                     layoutResults.first().isLineEllipsized(0)
                 )
 
-                // 2. Chip node y-bounds strictly between name node and opening node
+                // 2. Chip node y-bounds below name node and on the same horizontal row as opening node (updated in F29b)
                 assertTrue(
                     "[$themeLabel] Chip top (${chipBounds.top}) must be >= name bottom (${nameBounds.bottom}) (chip must be on Row 2 below name, not inline on Row 1)",
                     chipBounds.top >= nameBounds.bottom - 1.0f
                 )
                 assertTrue(
-                    "[$themeLabel] Chip bottom (${chipBounds.bottom}) must be <= opening top (${openingBounds.top}) (chip must be above Opening on Row 3)",
-                    chipBounds.bottom <= openingBounds.top + 1.0f
+                    "[$themeLabel] Opening top (${openingBounds.top}) must be >= name bottom (${nameBounds.bottom}) (opening is on Row 2 alongside chip)",
+                    openingBounds.top >= nameBounds.bottom - 1.0f
                 )
 
                 // 3. Balance on the name line right-aligned
@@ -7199,4 +7199,199 @@ class UiFilterVaultTest {
             composeTestRule.waitForIdle()
         }
     }
+
+    // --- UT29 (F29): Credit Cards header owed font size reduced to 20.sp (bold, red); Source row WITH budget places Budget Chip (flush left under Icon) and Opening Balance (flush right under Current Balance) in a horizontal Row with SpaceBetween; Source row WITHOUT budget keeps Opening Balance indented under Name ---
+    @Test
+    fun testUT29_creditCardOwedFontReduction_andSourceRowBudgetAlignment() {
+        runBlocking {
+            settingsRepository.setCurrency("₹")
+            com.example.domain.util.Formatters.updateCurrentCurrencySymbol("₹")
+            settingsRepository.setBudgetsCardVisible(true)
+            settingsRepository.setHideBalances(false)
+
+            val personalId = repository.insertAccount(
+                Account(id = 2901L, name = "Personal", accountType = "BANK", openingBalance = 6240.0, sortOrder = 1)
+            )
+            val salaryId = repository.insertAccount(
+                Account(id = 2902L, name = "Salary A/C", accountType = "BANK", openingBalance = 0.0, sortOrder = 2)
+            )
+            val cardId = repository.insertAccount(
+                Account(id = 2903L, name = "Regalia CC", accountType = "CREDIT_CARD", openingBalance = 0.0, sortOrder = 3)
+            )
+            val catId = repository.insertCategory(Category(id = 2901L, name = "General", color = "#10B981"))
+            val now = System.currentTimeMillis()
+            repository.insertTransaction(
+                TransactionEntity(id = 29001L, date = now, type = "INCOME", amount = 78300.24, toAccountId = personalId, categoryId = catId, description = "Funding")
+            )
+            repository.insertTransaction(
+                TransactionEntity(id = 29002L, date = now, type = "EXPENSE", amount = 5520.0, fromAccountId = personalId, categoryId = catId, description = "Spend")
+            )
+            repository.insertTransaction(
+                TransactionEntity(id = 29003L, date = now, type = "INCOME", amount = 54000.0, toAccountId = salaryId, categoryId = catId, description = "Salary")
+            )
+            repository.insertTransaction(
+                TransactionEntity(id = 29004L, date = now, type = "EXPENSE", amount = 103499.0, fromAccountId = cardId, categoryId = catId, description = "Card Spend")
+            )
+            repository.insertBudget(
+                com.example.data.model.BudgetEntity(
+                    id = 2901L,
+                    name = "Personal Account Allowance",
+                    scopeType = "ACCOUNT",
+                    targetName = "Personal",
+                    limitAmount = 25000.0,
+                    active = true
+                )
+            )
+
+            val dashboardVm = DashboardViewModel(repository, settingsRepository)
+            var mountScreen by androidx.compose.runtime.mutableStateOf(true)
+
+            composeTestRule.setContent {
+                MyApplicationTheme(darkTheme = false) {
+                    if (mountScreen) {
+                        DashboardScreen(
+                            viewModel = dashboardVm,
+                            onNavigateToExpenses = { _, _ -> }
+                        )
+                    }
+                }
+            }
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 5000) {
+                ShadowLooper.idleMainLooper()
+                dashboardVm.uiState.value.accountsWithBalance.size >= 3 &&
+                    dashboardVm.uiState.value.calculatedBudgets.isNotEmpty() &&
+                    dashboardVm.uiState.value.kpis.totalOwed > 0.0
+            }
+
+            fun findTextChild(root: androidx.compose.ui.semantics.SemanticsNode, expectedText: String): androidx.compose.ui.semantics.SemanticsNode? {
+                val txt = if (androidx.compose.ui.semantics.SemanticsProperties.Text in root.config) {
+                    root.config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString("") { it.text }
+                } else null
+                if (txt == expectedText) return root
+                for (c in root.children) {
+                    val found = findTextChild(c, expectedText)
+                    if (found != null) return found
+                }
+                return null
+            }
+
+            // =========================================================================
+            // UT29a: Credit Cards header renders the owed amount text with reduced 20.sp font size
+            // =========================================================================
+            composeTestRule.scrollToDashboardTag("kpi_credit_cards_owed", useUnmergedTree = true)
+            composeTestRule.waitForIdle()
+            val owedNode = composeTestRule.onNodeWithTag("kpi_credit_cards_owed", useUnmergedTree = true).fetchSemanticsNode()
+            val owedLayoutResults = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            if (androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult in owedNode.config) {
+                owedNode.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(owedLayoutResults)
+            }
+            assertTrue("TextLayoutResult must be available for kpi_credit_cards_owed", owedLayoutResults.isNotEmpty())
+            val owedStyle = owedLayoutResults.first().layoutInput.style
+            assertEquals("Credit Cards owed amount fontSize must be 20.sp", 20f, owedStyle.fontSize.value, 0.01f)
+            assertTrue(
+                "Credit Cards owed amount fontWeight must remain bold/black (>= Bold)",
+                (owedStyle.fontWeight?.weight ?: 0) >= androidx.compose.ui.text.font.FontWeight.Bold.weight
+            )
+            assertEquals(
+                "Credit Cards owed amount color must remain ExpenseRed",
+                com.example.ui.theme.ExpenseRed,
+                owedStyle.color
+            )
+
+            // =========================================================================
+            // UT29b: Source row WITH budget ("Personal") -> Budget Chip flush left (under Icon), Opening Balance flush right (under Current Balance) on the same horizontal Row (SpaceBetween)
+            // =========================================================================
+            composeTestRule.scrollToDashboardTag("source_row_$personalId", useUnmergedTree = true)
+            composeTestRule.waitForIdle()
+            val personalRowNode = composeTestRule.onNodeWithTag("source_row_$personalId", useUnmergedTree = true).fetchSemanticsNode()
+            val chipNode = composeTestRule.onNodeWithTag("source_budget_chip_$personalId", useUnmergedTree = true).fetchSemanticsNode()
+            val personalNameNode = findTextChild(personalRowNode, "Personal")
+            val personalOpeningNode = findTextChild(personalRowNode, "Opening: ₹6,240.00")
+            val personalBalanceNode = findTextChild(personalRowNode, "₹79,020.24")
+
+            assertNotNull("Personal name node must exist", personalNameNode)
+            assertNotNull("Personal opening node must exist", personalOpeningNode)
+            assertNotNull("Personal balance node must exist", personalBalanceNode)
+
+            val personalRowBounds = personalRowNode.boundsInRoot
+            val personalNameBounds = personalNameNode!!.boundsInRoot
+            val chipBounds = chipNode.boundsInRoot
+            val personalOpeningBounds = personalOpeningNode!!.boundsInRoot
+            val personalBalanceBounds = personalBalanceNode!!.boundsInRoot
+
+            val fourDpPx = with(composeTestRule.density) { 4.dp.toPx() }
+            val twelveDpPx = with(composeTestRule.density) { 12.dp.toPx() }
+
+            // 1. Budget Chip and Opening Balance are on the same horizontal line (Row 2)
+            assertEquals(
+                "UT29b: Budget Chip center.y (${chipBounds.center.y}) and Opening Balance center.y (${personalOpeningBounds.center.y}) must be on the same horizontal row",
+                chipBounds.center.y,
+                personalOpeningBounds.center.y,
+                fourDpPx
+            )
+            // 2. Both are below Row 1 (Name / Current Balance)
+            assertTrue(
+                "UT29b: Budget Chip top (${chipBounds.top}) must be below Name bottom (${personalNameBounds.bottom})",
+                chipBounds.top >= personalNameBounds.bottom - 1.0f
+            )
+            // 3. Budget Chip aligns to the start (flush left edge under Icon, i.e., left of Name's indented left edge)
+            assertEquals(
+                "UT29b: Budget Chip left (${chipBounds.left}) must align flush left with the Icon (row left + 12.dp padding = ${personalRowBounds.left + twelveDpPx})",
+                personalRowBounds.left + twelveDpPx,
+                chipBounds.left,
+                fourDpPx
+            )
+            assertTrue(
+                "UT29b: Budget Chip left (${chipBounds.left}) must be strictly to the left of Name left (${personalNameBounds.left}, which is after the 32.dp icon + 10.dp gap)",
+                chipBounds.left < personalNameBounds.left - fourDpPx
+            )
+            // 4. Opening Balance aligns to the end (flush right edge, to the right of Budget Chip)
+            assertTrue(
+                "UT29b: Opening Balance left (${personalOpeningBounds.left}) must be to the right of Budget Chip right (${chipBounds.right})",
+                personalOpeningBounds.left > chipBounds.right
+            )
+            assertEquals(
+                "UT29b: Opening Balance right (${personalOpeningBounds.right}) must align flush right with the row's right content edge (${personalRowBounds.right - twelveDpPx})",
+                personalRowBounds.right - twelveDpPx,
+                personalOpeningBounds.right,
+                fourDpPx
+            )
+
+            // =========================================================================
+            // UT29c: Source row WITHOUT budget ("Salary A/C") -> Opening Balance stays indented aligned with Name text, no budget chip
+            // =========================================================================
+            composeTestRule.scrollToDashboardTag("source_row_$salaryId", useUnmergedTree = true)
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("source_budget_chip_$salaryId", useUnmergedTree = true).assertDoesNotExist()
+            val salaryRowNode = composeTestRule.onNodeWithTag("source_row_$salaryId", useUnmergedTree = true).fetchSemanticsNode()
+            val salaryNameNode = findTextChild(salaryRowNode, "Salary A/C")
+            val salaryOpeningNode = findTextChild(salaryRowNode, "Opening: ₹0.00")
+            assertNotNull("Salary A/C name node must exist", salaryNameNode)
+            assertNotNull("Salary A/C opening node must exist", salaryOpeningNode)
+
+            val salaryRowBounds = salaryRowNode.boundsInRoot
+            val salaryNameBounds = salaryNameNode!!.boundsInRoot
+            val salaryOpeningBounds = salaryOpeningNode!!.boundsInRoot
+
+            // Opening Balance left aligns with Name left (indented past the icon, NOT flush left with row padding)
+            assertEquals(
+                "UT29c: Without budget, Opening Balance left (${salaryOpeningBounds.left}) must align with Name left (${salaryNameBounds.left})",
+                salaryNameBounds.left,
+                salaryOpeningBounds.left,
+                fourDpPx
+            )
+            assertTrue(
+                "UT29c: Without budget, Opening Balance left (${salaryOpeningBounds.left}) is indented past the icon (> row left + 12.dp)",
+                salaryOpeningBounds.left > salaryRowBounds.left + twelveDpPx + fourDpPx
+            )
+
+            mountScreen = false
+            dashboardVm.viewModelScope.cancel()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+        }
+    }
 }
+
