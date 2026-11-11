@@ -259,10 +259,12 @@ object MediaStoreWriter {
         val diskRows = countTransactionRows(diskContent)
         val newRows = countTransactionRows(newContent)
         if (diskRows > newRows && diskRows > 0) {
-            android.util.Log.w(
-                "MediaStoreWriter",
-                "REFUSING WRITE: on-disk $targetDesc has $diskRows rows > in-app state ($newRows rows)."
-            )
+            if (com.example.BuildConfig.DEBUG) {
+                android.util.Log.w(
+                    "MediaStoreWriter",
+                    "REFUSING WRITE: on-disk $targetDesc has $diskRows rows > in-app state ($newRows rows)."
+                )
+            }
             throw LargerBackupExistsException()
         }
     }
@@ -521,7 +523,9 @@ object MediaStoreWriter {
 
         val docName = rootDoc.name ?: ""
         if (isLegacyFolder(docName) || isLegacyFolder(treeUri.toString())) {
-            android.util.Log.w("MediaStoreWriter", "Refusing write to legacy root '$docName' (read-only)")
+            if (com.example.BuildConfig.DEBUG) {
+                android.util.Log.w("MediaStoreWriter", "Refusing write to legacy root '$docName' (read-only)")
+            }
             throw SecurityException("Legacy backup folders are read-only. Writes must target own folder only.")
         }
 

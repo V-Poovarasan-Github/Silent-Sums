@@ -285,11 +285,6 @@ val COMMON_TASKS_AFFORDANCES: List<GestureHelpItem> = listOf(
 const val TALKBACK_HELP_NOTE =
     "With TalkBack, use the Actions menu on rows and cards instead of swiping or holding."
 
-object HelpGesturesCatalog {
-    val AUDITED_AFFORDANCES: List<GestureHelpItem> = com.example.ui.dashboard.AUDITED_AFFORDANCES
-    val COMMON_TASKS_AFFORDANCES: List<GestureHelpItem> = com.example.ui.dashboard.COMMON_TASKS_AFFORDANCES
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpGesturesSheet(

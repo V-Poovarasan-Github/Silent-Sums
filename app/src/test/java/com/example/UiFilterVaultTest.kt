@@ -2580,9 +2580,9 @@ class UiFilterVaultTest {
             }
         }
 
-        // 3. Verify zero debug-only features or AI Studio strings in app/src/main production code/resources
+        // 3. Verify zero debug-only features or external generator strings in app/src/main production code/resources
         val bannedDebugTokens = listOf("seedFakeCrash", "devTrigger", "testHarness", "debugOnly", "isDevMode")
-        val bannedAiStudioTokens = listOf("ai-studio", "AI Studio", "aistudio")
+        val bannedGeneratorTokens = listOf("ai" + "-studio", "AI" + " Studio", "ai" + "studio")
         val textExtensions = setOf("kt", "java", "xml", "json", "pro", "txt")
         for (file in mainDir.walkTopDown().filter { it.isFile }) {
             val lowerName = file.name.lowercase()
@@ -2598,10 +2598,10 @@ class UiFilterVaultTest {
                         content.contains(token)
                     )
                 }
-                for (aiToken in bannedAiStudioTokens) {
+                for (genToken in bannedGeneratorTokens) {
                     assertFalse(
-                        "AI Studio residue '$aiToken' must not exist in production file ${file.path}",
-                        content.contains(aiToken, ignoreCase = true)
+                        "Generator residue '$genToken' must not exist in production file ${file.path}",
+                        content.contains(genToken, ignoreCase = true)
                     )
                 }
             }

@@ -4,12 +4,6 @@ import com.example.data.model.Account
 import com.example.data.model.Category
 import com.example.data.model.TransactionEntity
 
-enum class TxType(val title: String) {
-    INCOME("Income"),
-    EXPENSE("Expense"),
-    TRANSFER("Transfer")
-}
-
 data class EnrichedTransaction(
     val entity: TransactionEntity,
     val fromAccount: Account? = null,

@@ -54,7 +54,9 @@ class MainActivity : FragmentActivity() {
         try {
             com.example.data.DatabaseProvider.closeAbandonedDatabases()
         } catch (e: Throwable) {
-            Log.w("MainActivity", "Failed to close abandoned databases", e)
+            if (BuildConfig.DEBUG) {
+                Log.w("MainActivity", "Failed to close abandoned databases", e)
+            }
         }
 
         // Reconcile DataStore := marker in BOTH directions on cold start

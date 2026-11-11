@@ -158,11 +158,9 @@ class MediaRepository(
         isDemoMode: Boolean = this.isDemo
     ): Int = withContext(Dispatchers.IO) {
         if (isDemoMode || isDemo) {
-            android.util.Log.d("MediaVault", "Orphan reconciliation skipped: Demo mode active")
             return@withContext 0
         }
         if (isSaveOrRestoreInProgress) {
-            android.util.Log.d("MediaVault", "Orphan reconciliation skipped: Save or restore in progress")
             return@withContext 0
         }
         if (!isDemo && mediaRoot.name == StorageConstants.DEMO_MEDIA_DIR) {
@@ -183,7 +181,9 @@ class MediaRepository(
                         val txnId = dir.name.removePrefix("txn_").toLongOrNull() ?: dir.name.toLongOrNull()
                         if (txnId != null && !validTxnIds.contains(txnId)) {
                             // Stage 2A-1: Log and LEAVE IN PLACE. No move, no delete, no manifest.
-                            android.util.Log.i("MediaVault", "Orphan vault directory found at ${dir.absolutePath} for txnId $txnId - left in place.")
+                            if (com.example.BuildConfig.DEBUG) {
+                                android.util.Log.i("MediaVault", "Orphan vault directory found at ${dir.absolutePath} for txnId $txnId - left in place.")
+                            }
                         }
                     }
                 }
@@ -252,7 +252,9 @@ class MediaRepository(
 
     suspend fun syncToMirror(mirrorDir: File, mediaRef: String, kind: String, file: File) = withContext(Dispatchers.IO) {
         if (isDemo || mediaRoot.name == StorageConstants.DEMO_MEDIA_DIR) {
-            android.util.Log.w("MediaMirror", "Refusing to mirror in demo mode")
+            if (com.example.BuildConfig.DEBUG) {
+                android.util.Log.w("MediaMirror", "Refusing to mirror in demo mode")
+            }
             return@withContext
         }
         if (!file.exists()) return@withContext

@@ -271,7 +271,9 @@ class SettingsViewModel(
                 com.example.data.DatabaseProvider.flipTo(context, settingsRepository, targetDemoMode = true)
                 _statusMessage.emit("Sample ledger data loaded successfully!")
             } catch (t: Throwable) {
-                Log.e("SettingsViewModel", "Failed to load sample data", t)
+                if (com.example.BuildConfig.DEBUG) {
+                    Log.e("SettingsViewModel", "Failed to load sample data", t)
+                }
                 val crashReport = "CRASH: ${t.javaClass.name}: ${t.message}\n" + t.stackTraceToString()
                 try {
                     File(context.filesDir, "crash.log").appendText(crashReport)
@@ -287,7 +289,9 @@ class SettingsViewModel(
             com.example.data.DatabaseProvider.flipTo(context, settingsRepository, targetDemoMode = true)
             _statusMessage.emit("Sample ledger data loaded successfully!")
         } catch (t: Throwable) {
-            Log.e("SettingsViewModel", "Failed to load sample data with safety", t)
+            if (com.example.BuildConfig.DEBUG) {
+                Log.e("SettingsViewModel", "Failed to load sample data with safety", t)
+            }
             val crashReport = "CRASH: ${t.javaClass.name}: ${t.message}\n" + t.stackTraceToString()
             try {
                 File(context.filesDir, "crash.log").appendText(crashReport)
@@ -350,7 +354,9 @@ class SettingsViewModel(
                 com.example.MainActivity.markSessionUnlocked(context)
                 com.example.data.DatabaseProvider.flipTo(context, settingsRepository, targetDemoMode = false)
             } catch (t: Throwable) {
-                Log.e("SettingsViewModel", "Failed to exit demo mode", t)
+                if (com.example.BuildConfig.DEBUG) {
+                    Log.e("SettingsViewModel", "Failed to exit demo mode", t)
+                }
                 val crashReport = "CRASH: ${t.javaClass.name}: ${t.message}\n" + t.stackTraceToString()
                 try {
                     File(context.filesDir, "crash.log").appendText(crashReport)
@@ -390,7 +396,9 @@ class SettingsViewModel(
                         }
                     }
                 } catch (e: Throwable) {
-                    android.util.Log.e("SettingsViewModel", "Failed to clear mirror folder", e)
+                    if (com.example.BuildConfig.DEBUG) {
+                        android.util.Log.e("SettingsViewModel", "Failed to clear mirror folder", e)
+                    }
                 }
             }
             repository.clearAllData()

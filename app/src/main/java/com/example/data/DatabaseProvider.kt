@@ -75,7 +75,9 @@ object DatabaseProvider {
                 val mediaRepo = MediaRepository(context, demoDb)
                 StorageBundle(demoDb, mediaRepo, isDemo = true)
             } catch (t: Throwable) {
-                Log.e(TAG, "Corrupt or unseeded demo database detected; falling back to real mode", t)
+                if (com.example.BuildConfig.DEBUG) {
+                    Log.e(TAG, "Corrupt or unseeded demo database detected; falling back to real mode", t)
+                }
                 purgeDemoLeftovers(context)
                 val realDb = buildDatabase(context, StorageConstants.REAL_DATABASE_NAME)
                 val mediaRepo = MediaRepository(context, realDb)
@@ -118,7 +120,9 @@ object DatabaseProvider {
             val demoStaging = File(context.cacheDir, StorageConstants.DEMO_STAGING_DIR)
             if (demoStaging.exists()) demoStaging.deleteRecursively()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to purge demo leftovers: ${e.message}")
+            if (com.example.BuildConfig.DEBUG) {
+                Log.w(TAG, "Failed to purge demo leftovers: ${e.message}")
+            }
         }
     }
 
@@ -217,7 +221,9 @@ object DatabaseProvider {
             try {
                 db.close()
             } catch (e: Throwable) {
-                Log.w(TAG, "Swallowed error closing abandoned database", e)
+                if (com.example.BuildConfig.DEBUG) {
+                    Log.w(TAG, "Swallowed error closing abandoned database", e)
+                }
             }
         }
     }

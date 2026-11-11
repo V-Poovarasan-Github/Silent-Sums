@@ -3,7 +3,7 @@
     <shortcut
         android:shortcutId="add_expense"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@drawable/ic_shortcut_add_expense"
         android:shortcutShortLabel="@string/shortcut_add_expense_short"
         android:shortcutLongLabel="@string/shortcut_add_expense_long">
         <intent
@@ -16,7 +16,7 @@
     <shortcut
         android:shortcutId="add_income"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@drawable/ic_shortcut_add_income"
         android:shortcutShortLabel="@string/shortcut_add_income_short"
         android:shortcutLongLabel="@string/shortcut_add_income_long">
         <intent
@@ -29,7 +29,7 @@
     <shortcut
         android:shortcutId="view_dues"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher_foreground"
+        android:icon="@drawable/ic_shortcut_view_dues"
         android:shortcutShortLabel="@string/shortcut_view_dues_short"
         android:shortcutLongLabel="@string/shortcut_view_dues_long">
         <intent
