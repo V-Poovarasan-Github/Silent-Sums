@@ -73,13 +73,13 @@ Grab the latest signed build from **[Releases](../../releases/latest)** → `app
 - 🗄️ Personal Vault: a second, separately-PIN-locked space.
 - 🌐 A companion **PWA** so your CSV opens in any browser, anywhere — same data, no install.
 
-## Contributing / feedback
+## Feedback
 
-Built solo, shipped in the open. Issues and PRs welcome — especially from anyone who's been burned by a "free" finance app and wants a real offline alternative. If SilentSums saved your sanity (or your data), a ⭐ on the repo is the best thank-you.
+Built solo. Bug reports and feedback via GitHub issues are welcome — especially from anyone who's been burned by a "free" finance app and wants a real offline alternative. If SilentSums saved your sanity (or your data), a ⭐ on the repo is the best thank-you.
 
 ## License
 
-MIT — do whatever you want with it, including forking your own fork. Just don't sell my privacy promises back to me as a subscription.
+Copyright (c) 2026 V Poovarasan. All rights reserved. This source code is provided for viewing purposes only; no permission is granted to use, copy, modify, or distribute it, in whole or in part, for any purpose.
 
 ---
 
