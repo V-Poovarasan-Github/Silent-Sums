@@ -38,7 +38,8 @@ SilentSums requests permissions only for specific local features that you initia
 None of your data leaves your device unless you explicitly export or share a file yourself:
 
 - **CSV Backups (`.csv`)**: Contain your text-based ledger records (transactions, accounts, categories, budgets, commitments, and custom fields). Receipt photos, voice notes, and your PIN hash are **not** included in CSV files.
-- **Full JSON Backups (`.json`)**: Contain your ledger records plus embedded receipt photos and voice notes for complete device migration. Your PIN hash is **not** included in JSON backups.
+- **JSON Backups (`.json`)**: Contain your accounts, categories, custom fields, transactions, and a few display settings. Receipt photos, voice notes, and your PIN hash are **not** included in JSON backups.
+- **Optional Media Mirror**: Photos and voice notes live only in the app's private storage on your phone. If you turn on the Mirror setting and choose a folder, copies of your attachments are written to that folder so they can survive a reinstall or a new phone. Mirror is off by default and the folder is one you pick.
 - **Crash Logs**: If the app encounters an unexpected crash, the stack trace is saved locally in private storage. It is never uploaded automatically; you choose whether to inspect or share it via Android's share sheet.
 
 When you export a backup to a custom folder (via Android's Storage Access Framework or `Downloads`) or share a file through Android's share sheet, that exported file is governed by your own device storage and whichever app or service you choose to send it to.

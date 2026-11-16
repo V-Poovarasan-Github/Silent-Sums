@@ -28,7 +28,7 @@ SilentSums is an offline-first money and expense manager built on a simple premi
 
 * **Absolute Privacy**: No accounts, no registration, and no cloud logins required.
 * **100% Local Storage**: Your financial ledger stays entirely inside your phone's private app storage (`context.filesDir` / Room SQLite database), with cloud backup disabled (`android:allowBackup="false"`).
-* **Open CSV Portability & Full JSON Backup**: Own your data unconditionally. Export and import ledger backups in universal CSV format anytime for spreadsheets, or use the full JSON backup/restore format when you want to include receipt photos and voice notes. *(Note: Photos and voice notes are NOT included in CSV backups; they are included only in the full JSON backup/restore.)*
+* **Open CSV Portability & JSON Snapshot**: Own your data unconditionally. Export and import ledger backups in universal CSV format anytime for spreadsheets, or use the JSON snapshot format for accounts, categories, and transactions. *(Note: Receipt photos and voice notes are NOT included in CSV or JSON backups; they stay in private app storage and can optionally be mirrored to a user-selected folder via the Mirror setting.)*
 * **Automated Rolling Backups**: Automatically saves rolling snapshots to private app storage and optional user-selected Storage Access Framework (SAF) or Downloads folders without sending a single byte over the wire.
 * **Split Transactions**: Accurately split bills across multiple categories, tracking multi-category purchases and group outings with mathematical precision.
 * **Rich Attachments (Photos & Voice Notes)**: Capture receipt photos and dictate voice memos directly alongside transactions, housed in a private on-device media vault (`filesDir/media/`).
@@ -48,11 +48,11 @@ SilentSums is an offline-first money and expense manager built on a simple premi
 
 ## 5. Plain-Language Privacy Policy Summary & Hosting URL
 
-* **Hosted Privacy Policy URL (Placeholder)**: `https://<YOUR-DOMAIN-OR-GITHUB-PAGES-URL>/PRIVACY_POLICY` *(Host the root [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) file at a public HTTPS URL and paste the final link into Google Play Console → App content → Privacy policy before submission.)*
+* **Hosted Privacy Policy URL**: `https://v-poovarasan-github.github.io/Silent-Sums/privacy.html` *(Matches [`privacy.html`](privacy.html) and [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md); paste this URL into Google Play Console → App content → Privacy policy.)*
 * **No Internet Permission (`android.permission.INTERNET`)**: SilentSums does not declare the Android internet permission in its manifest. The application cannot connect to the internet, network servers, or third-party cloud backends.
 * **Zero Telemetry or Analytics**: There are no tracking SDKs, no ad networks, no crash collection services, and no analytics libraries embedded in the application.
 * **Data Stays On Device**: All ledger records, accounts, categories, budgets, receipt images, voice recordings, and audit logs reside strictly in private app storage on your device. The SQLite database is stored in the OS-sandboxed app data directory (`allowBackup="false"`), and your optional 4-digit PIN is hashed using salted PBKDF2-HMAC-SHA256 (`120,000` iterations).
-* **User-Controlled Export**: You have full control over when and where your data is exported. CSV exports contain your tabular ledger data (transactions, accounts, categories, budgets, commitments) without media binaries; full JSON backups include both ledger data and base64-encoded receipt photos/voice notes. Neither export format includes your PIN hash.
+* **User-Controlled Export & Optional Media Mirror**: You have full control over when and where your data is exported. CSV and JSON exports contain your ledger records without receipt photos, voice notes, or your PIN hash; if you enable the optional Mirror setting and pick a folder, copies of your receipt photos and voice notes are mirrored to that folder so they survive a reinstall or device switch.
 * **Crash Log Privacy**: If the app crashes, you can inspect or share the technical stack trace yourself via the Android share sheet; it is never sent automatically and contains no financial amounts or PIN data.
 
 ---

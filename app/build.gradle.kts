@@ -20,15 +20,25 @@ android {
   }
 
   signingConfigs {
-    val keystorePath = providers.environmentVariable("KEYSTORE_PATH").orNull
-    val storePwd = providers.environmentVariable("STORE_PASSWORD").orNull
-    val keyPwd = providers.environmentVariable("KEY_PASSWORD").orNull
+    val keystorePath =
+      providers.gradleProperty("android.injected.signing.store.file").orNull
+        ?: providers.environmentVariable("KEYSTORE_PATH").orNull
+    val storePwd =
+      providers.gradleProperty("android.injected.signing.store.password").orNull
+        ?: providers.environmentVariable("STORE_PASSWORD").orNull
+    val keyAliasName =
+      providers.gradleProperty("android.injected.signing.key.alias").orNull
+        ?: providers.environmentVariable("KEY_ALIAS").orNull
+        ?: "SilentSums"
+    val keyPwd =
+      providers.gradleProperty("android.injected.signing.key.password").orNull
+        ?: providers.environmentVariable("KEY_PASSWORD").orNull
     val releaseKeystore = file(keystorePath ?: "${rootDir}/my-upload-key.jks")
     if (releaseKeystore.exists() && !storePwd.isNullOrEmpty() && !keyPwd.isNullOrEmpty()) {
       create("release") {
         storeFile = releaseKeystore
         storePassword = storePwd
-        keyAlias = "upload"
+        keyAlias = keyAliasName
         keyPassword = keyPwd
         enableV1Signing = true
         enableV2Signing = true
@@ -79,12 +89,17 @@ ksp {
 
 val defaultReleaseKeystorePath = "${rootDir}/my-upload-key.jks"
 val checkReleaseSigning by tasks.registering {
+  val injectedStoreFileProvider = providers.gradleProperty("android.injected.signing.store.file")
+  val injectedStorePasswordProvider = providers.gradleProperty("android.injected.signing.store.password")
+  val injectedKeyPasswordProvider = providers.gradleProperty("android.injected.signing.key.password")
   val keystorePathProvider = providers.environmentVariable("KEYSTORE_PATH")
   val storePasswordProvider = providers.environmentVariable("STORE_PASSWORD")
   val keyPasswordProvider = providers.environmentVariable("KEY_PASSWORD")
   val fallbackKeystorePath = defaultReleaseKeystorePath
   doLast {
-    val resolvedKeystorePath = keystorePathProvider.orNull
+    val resolvedKeystorePath = injectedStoreFileProvider.orNull ?: keystorePathProvider.orNull
+    val resolvedStorePassword = injectedStorePasswordProvider.orNull ?: storePasswordProvider.orNull
+    val resolvedKeyPassword = injectedKeyPasswordProvider.orNull ?: keyPasswordProvider.orNull
     val keystoreFile = File(resolvedKeystorePath ?: fallbackKeystorePath)
     val missingVars = buildList {
       if (resolvedKeystorePath.isNullOrEmpty() && !keystoreFile.exists()) {
@@ -92,13 +107,13 @@ val checkReleaseSigning by tasks.registering {
       } else if (!keystoreFile.exists()) {
         add("KEYSTORE_PATH (file not found at ${keystoreFile.path})")
       }
-      if (storePasswordProvider.orNull.isNullOrEmpty()) add("STORE_PASSWORD")
-      if (keyPasswordProvider.orNull.isNullOrEmpty()) add("KEY_PASSWORD")
+      if (resolvedStorePassword.isNullOrEmpty()) add("STORE_PASSWORD")
+      if (resolvedKeyPassword.isNullOrEmpty()) add("KEY_PASSWORD")
     }
     if (missingVars.isNotEmpty()) {
       throw GradleException(
         "Release signing credentials missing: ${missingVars.joinToString(", ")}. " +
-          "Provide KEYSTORE_PATH, STORE_PASSWORD, and KEY_PASSWORD to build release artifacts."
+          "Use Android Studio 'Generate Signed App Bundle or APK' or provide KEYSTORE_PATH, STORE_PASSWORD, and KEY_PASSWORD."
       )
     }
   }

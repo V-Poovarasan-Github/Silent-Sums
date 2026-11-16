@@ -23,7 +23,7 @@ SilentSums is the opposite bet. Built for real life: the ₹170 tea on the highw
 - **💳 Multi-source net worth.** Cash pockets, bank accounts, and credit-card debt tracked separately; see your true net position at a glance.
 - **📊 Budget guardrails.** Per-category and per-account limits with live green/amber/red status chips, so overspending is visible before the statement arrives.
 - **📈 Trends that respect you.** Running-balance and income-vs-spend charts with tap-to-zoom, hold-to-open-ledger, and accessible exact-value announcements.
-- **🧾 CSV & JSON you own.** Export your ledger to a human-readable `expense_tracker.csv` (or a full `.json` backup including receipt photos and voice memos); import it back anytime, on any device, into any tool. No proprietary lock-in.
+- **🧾 CSV & JSON you own.** Export your ledger to a human-readable `expense_tracker.csv` (or a `.json` snapshot of accounts, categories, and transactions), plus an optional media Mirror folder for receipt photos and voice memos; import it back anytime, on any device, into any tool. No proprietary lock-in.
 - **🪶 Featherweight.** 3.19 MB R8-minified release APK (6.78 MB AAB). Installs in seconds, opens instantly, sips battery.
 
 ## Security
@@ -45,7 +45,7 @@ SilentSums enforces defense-in-depth for local financial data:
 | No cloud | Data lives in a local Room (SQLite) database in private app storage (`app.silentsums`). |
 | No tracking | No analytics SDK, no ad SDK, no crash-reporting upload. |
 | No network capability | No `INTERNET` permission in `AndroidManifest.xml`. |
-| Your data, portable | One-tap CSV export/import for spreadsheets, plus full JSON backup/restore with media attachments. |
+| Your data, portable | One-tap CSV and JSON export/import, plus optional user-picked media Mirror folder for receipt photos and voice notes. |
 | Lockable | Salted PBKDF2 PIN + biometric unlock with grace period and `FLAG_SECURE` privacy mask. |
 
 See [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) for the full plain-language privacy policy and [`PLAY_STORE_GUIDE.md`](PLAY_STORE_GUIDE.md) for Google Play Data Safety details.
