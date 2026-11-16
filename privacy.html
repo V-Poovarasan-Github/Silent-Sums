@@ -153,7 +153,8 @@
     <p>None of your data leaves your device unless you explicitly export or share a file yourself:</p>
     <ul>
       <li><b>CSV backups (<code>.csv</code>):</b> Contain your text-based ledger records (transactions, accounts, categories, budgets, commitments, and custom fields). Receipt photos, voice notes, and your PIN hash are <b>not</b> included in CSV files.</li>
-      <li><b>Full JSON backups (<code>.json</code>):</b> Contain your ledger records plus embedded receipt photos and voice notes for complete device migration. Your PIN hash is <b>not</b> included in JSON backups.</li>
+      <li><b>JSON backups (<code>.json</code>):</b> Contain your accounts, categories, custom fields, transactions, and a few display settings. Receipt photos, voice notes, and your PIN hash are <b>not</b> included in JSON backups.</li>
+      <li><b>Optional media Mirror:</b> Photos and voice notes live only in the app's private storage on your phone. If you turn on the Mirror setting and choose a folder, copies of your attachments are written to that folder so they can survive a reinstall or a new phone. Mirror is off by default and the folder is one you pick.</li>
       <li><b>Crash logs:</b> If the app encounters an unexpected crash, the stack trace is saved locally in private storage. It is never uploaded automatically; you choose whether to inspect or share it via Android's share sheet.</li>
     </ul>
     <p>When you export a backup to a custom folder (via Android's Storage Access Framework or <code>Downloads</code>) or share a file through Android's share sheet, that exported file is governed by your own device storage and whichever app or service you choose to send it to.</p>
