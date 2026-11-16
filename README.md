@@ -60,7 +60,7 @@ Grab the latest signed build from **[Releases](../../releases/latest)** → `app
 
 - **Application ID & Theme** — `applicationId = "app.silentsums"`, `Theme.SilentSums`, version `1.0.0` (`versionCode = 1`).
 - **Kotlin + Jetpack Compose (Material 3)** — native UI with TalkBack custom actions, semantic roles, merged card announcements, and 200% font-scale elasticity.
-- **Room (Schema v10)** — explicit, non-destructive migrations (`1 → 10`) with exported schema JSON (`app/schemas/com.example.data.local.AppDatabase/10.json`).
+- **Room (Schema v10)** — explicit, non-destructive migrations (`1 → 10`) with exported schema JSON (`app/schemas/com.example.data.AppDatabase/10.json`).
 - **WorkManager** — periodic background auto-save and due reminders with zero foreground service bloat.
 - **MediaStore / SAF** — scoped-storage-compliant CSV and JSON I/O.
 - **Verification** — 417 unit and Robolectric Compose UI tests across 42 test classes (`gradle testDebugUnitTest`), plus `MainActivitySmokeTest` in `androidTest`.
@@ -73,13 +73,13 @@ Grab the latest signed build from **[Releases](../../releases/latest)** → `app
 - 🗄️ Personal Vault: a second, separately-PIN-locked space.
 - 🌐 A companion **PWA** so your CSV opens in any browser, anywhere — same data, no install.
 
-## Feedback
+## Contributing / feedback
 
-Built solo. Bug reports and feedback via GitHub issues are welcome — especially from anyone who's been burned by a "free" finance app and wants a real offline alternative. If SilentSums saved your sanity (or your data), a ⭐ on the repo is the best thank-you.
+Built solo, shipped in the open. Issues and PRs welcome — especially from anyone who's been burned by a "free" finance app and wants a real offline alternative. If SilentSums saved your sanity (or your data), a ⭐ on the repo is the best thank-you.
 
 ## License
 
-Copyright (c) 2026 V Poovarasan. All rights reserved. This source code is provided for viewing purposes only; no permission is granted to use, copy, modify, or distribute it, in whole or in part, for any purpose.
+MIT — do whatever you want with it, including forking your own fork. Just don't sell my privacy promises back to me as a subscription.
 
 ---
 

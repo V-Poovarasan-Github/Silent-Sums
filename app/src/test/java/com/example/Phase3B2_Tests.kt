@@ -32,6 +32,8 @@ import com.example.ui.ledger.LedgerRowItem
 import com.example.ui.ledger.LedgerViewModel
 import com.example.ui.ledger.buildLedgerRowItems
 import com.example.ui.onboarding.OnboardingSourceScreen
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -75,6 +77,7 @@ class Phase3B2_Tests {
 
     @After
     fun tearDown() {
+        ShadowLooper.idleMainLooper()
         database.close()
     }
 
@@ -190,6 +193,7 @@ class Phase3B2_Tests {
             assertTrue("All N rows must share the exact same groupId", allTxs.all { it.groupId == firstGid })
             assertEquals(1000.0, allTxs.sumOf { it.amount }, 0.001)
             assertTrue(allTxs.all { it.description == "Supermarket Run" })
+            vm.viewModelScope.cancel()
         }
     }
 
@@ -277,6 +281,7 @@ class Phase3B2_Tests {
             assertEquals(2, afterUndo.size)
             assertTrue(afterUndo.all { it.groupId == gid })
             assertEquals(500.0, afterUndo.sumOf { it.amount }, 0.001)
+            ledgerVm.viewModelScope.cancel()
         }
     }
 
@@ -312,6 +317,7 @@ class Phase3B2_Tests {
             val remaining = repository.getAllTransactionsList()
             assertEquals(1, remaining.size)
             assertNull("Saved single row must have null groupId", remaining[0].groupId)
+            entryVm.viewModelScope.cancel()
         }
     }
 
@@ -444,6 +450,7 @@ class Phase3B2_Tests {
         composeTestRule.onNodeWithTag("mode_tab_expense").assertDoesNotExist()
         composeTestRule.onNodeWithTag("mode_tab_income").assertDoesNotExist()
         composeTestRule.onNodeWithTag("mode_tab_transfer").assertDoesNotExist()
+        ShadowLooper.idleMainLooper()
     }
 
     // T11: Setting the Type chip to Income flips the KPI label to "This Month Credits" and the flow-card title to "Where money came from", and the Balance Breakdown sheet's mode toggle produces the same flip (shared state proven)
@@ -468,6 +475,7 @@ class Phase3B2_Tests {
         vm.setTypeMode("INCOME")
         val stateSheetFlip = vm.uiState.awaitState { it.activeTypeMode == "INCOME" }
         assertEquals("INCOME", stateSheetFlip.activeTypeMode)
+        vm.viewModelScope.cancel()
     }
 }
 
@@ -537,6 +545,7 @@ class Phase3B2_Tests {
         val transferState = vm.uiState.awaitState { it.activeTypeMode == "TRANSFER" }
         assertFalse("Budgets card must be hidden in Transfer mode", transferState.isBudgetsCardVisibleForMode)
         assertEquals(0.0, transferState.movedOutThisMonth, 0.01)
+        vm.viewModelScope.cancel()
     }
 }
 

@@ -51,7 +51,7 @@
 
 ---
 
-## TASK RELEASE-3 — PHASE 2: RELEASE BUILD & R8 (`app/build.gradle.kts`, `gradle/libs.versions.toml`, `proguard-rules.pro`, `themes.xml`, `AppDatabase.kt`, `app/schemas/com.example.data.local.AppDatabase/10.json`)
+## TASK RELEASE-3 — PHASE 2: RELEASE BUILD & R8 (`app/build.gradle.kts`, `gradle/libs.versions.toml`, `proguard-rules.pro`, `themes.xml`, `AppDatabase.kt`, `app/schemas/com.example.data.AppDatabase/10.json`)
 
 1. **2.1 R8 Shrinking & Keep Rules (`app/build.gradle.kts`, `proguard-rules.pro`)**:
    - Enabled `isMinifyEnabled = true` and `isShrinkResources = true` on the `release` build type.
@@ -62,7 +62,7 @@
    - Renamed the XML theme from `Theme.PaisaTrack` to `Theme.SilentSums` in `values/themes.xml`, `values-night/themes.xml`, and `AndroidManifest.xml`.
    - Upgraded `androidx.biometric:biometric` to stable `1.1.0` and removed unused template dependencies.
 4. **2.4 Room Schema Export (`AppDatabase.kt`, `app/build.gradle.kts`)**:
-   - Enabled `exportSchema = true` on `AppDatabase` (version 10), configured KSP `room.schemaLocation` to `$projectDir/schemas`, and generated `app/schemas/com.example.data.local.AppDatabase/10.json`.
+   - Enabled `exportSchema = true` on `AppDatabase` (version 10), configured KSP `room.schemaLocation` to `$projectDir/schemas`, and generated `app/schemas/com.example.data.AppDatabase/10.json`.
 
 ---
 
