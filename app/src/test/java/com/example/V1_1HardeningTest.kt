@@ -329,10 +329,6 @@ class V1_1HardeningTest {
         composeTestRule.waitForIdle()
 
         assertEquals(1, saveCount)
-        assertTrue(
-            "hasAskedCommitmentNotificationPermission must be persisted as true after first commitment save",
-            settingsRepository.settingsFlow.first().hasAskedCommitmentNotificationPermission
-        )
 
         // Rationale dialog is shown with exact Settings text
         composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertIsDisplayed()
@@ -341,11 +337,15 @@ class V1_1HardeningTest {
             "Allow notifications so SilentSums can alert you when recurring bills or dues are approaching."
         )
 
-        // Tap Skip -> dialog closes
+        // Tap Skip -> dialog closes and flag is persisted
         composeTestRule.onNodeWithTag("commitment_notif_rationale_skip_btn").performClick()
         ShadowLooper.idleMainLooper()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertDoesNotExist()
+        assertTrue(
+            "hasAskedCommitmentNotificationPermission must be persisted as true after first commitment save",
+            settingsRepository.settingsFlow.first().hasAskedCommitmentNotificationPermission
+        )
         Unit
     }
 
@@ -698,5 +698,311 @@ class V1_1HardeningTest {
         assertEquals("₹11,000.00", com.example.domain.util.Formatters.formatMoney(accountBal10000))
         assertEquals("₹11,000.00", com.example.domain.util.Formatters.formatMoney(currentBal10000))
         assertEquals("₹11,000.00", com.example.domain.util.Formatters.formatMoney(runningBal10000))
+    }
+
+    // =========================================================================
+    // FOLLOW-UP 1: Do not burn reminder marker when notifications are disabled
+    // =========================================================================
+
+    @Test
+    fun followup1_disabledNotificationsDoNotBurnReminderMarker_reEnablingOnSameDayNotifiesAndRecordsMarker() {
+        runBlocking {
+            val accountId = repository.insertAccount(
+                com.example.data.model.Account(name = "Main Bank", accountType = "BANK", openingBalance = 50000.0)
+            )
+            val fakeNow = java.util.Calendar.getInstance().apply {
+                set(2026, java.util.Calendar.JUNE, 15, 10, 0, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            val todayStart = java.util.Calendar.getInstance().apply {
+                timeInMillis = fakeNow
+                set(java.util.Calendar.HOUR_OF_DAY, 0)
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            repository.insertCommitment(
+                com.example.data.model.Commitment(
+                    id = 501L,
+                    type = "IOU",
+                    name = "Rent IOU",
+                    amount = 2500.0,
+                    direction = "OUTGOING",
+                    dueDate = todayStart + 8L * 3_600_000L,
+                    accountId = accountId,
+                    createdAt = todayStart - 86_400_000L * 3,
+                    active = true
+                )
+            )
+
+            val notifManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val shadowNotifManager = org.robolectric.Shadows.shadowOf(notifManager)
+            notifManager.cancelAll()
+
+            try {
+                // 1. Notifications disabled -> 0 notifications and marker is NOT recorded
+                shadowNotifManager.setNotificationsEnabled(false)
+                com.example.worker.DueReminderWorker.checkAndNotify(
+                    context,
+                    database,
+                    settingsRepository,
+                    now = fakeNow
+                )
+                assertEquals(0, shadowNotifManager.allNotifications.size)
+                assertTrue(
+                    "Reminder marker must not be burned when notifications are disabled",
+                    settingsRepository.settingsFlow.first().reminderLastNotified.isEmpty()
+                )
+
+                // 2. Re-enable notifications on the same day -> 1 notification and marker IS recorded
+                shadowNotifManager.setNotificationsEnabled(true)
+                com.example.worker.DueReminderWorker.checkAndNotify(
+                    context,
+                    database,
+                    settingsRepository,
+                    now = fakeNow + 3_600_000L
+                )
+                assertEquals(1, shadowNotifManager.allNotifications.size)
+                assertTrue(
+                    "Reminder marker must be recorded after notification is actually shown",
+                    settingsRepository.settingsFlow.first().reminderLastNotified.contains("501:2026-06-15:due_today")
+                )
+            } finally {
+                shadowNotifManager.setNotificationsEnabled(true)
+            }
+        }
+    }
+
+    // =========================================================================
+    // FOLLOW-UP 2: No runBlocking in UI code; saving commitment shows dialog once
+    // =========================================================================
+
+    @Test
+    fun followup2_savingCommitmentWithoutRunBlocking_showsRationaleDialogOnce() {
+        runBlocking {
+            val accounts = listOf(com.example.data.model.Account(id = 1L, name = "HDFC Bank", accountType = "BANK"))
+            var saveCount = 0
+            val showSheet = androidx.compose.runtime.mutableStateOf(true)
+
+            composeTestRule.setContent {
+                MyApplicationTheme {
+                    if (showSheet.value) {
+                        com.example.ui.commitment.AddEditCommitmentSheet(
+                            commitment = null,
+                            accounts = accounts,
+                            categories = emptyList(),
+                            onDismiss = { showSheet.value = false },
+                            onSave = { saveCount++ }
+                        )
+                    }
+                }
+            }
+            composeTestRule.waitForIdle()
+
+            // First save (even with cachedSettings cleared so coroutine fallback runs) -> shows rationale dialog
+            composeTestRule.onNodeWithTag("commitment_name_input").performClick()
+            composeTestRule.onNodeWithTag("commitment_name_input").performTextInput("Gym Membership")
+            composeTestRule.onNodeWithTag("commitment_amount_input").performTextInput("1500")
+            composeTestRule.onNodeWithTag("save_commitment_btn").performClick()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            assertEquals(1, saveCount)
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertIsDisplayed()
+
+            // Dismiss via Skip -> sheet closes
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_skip_btn").performClick()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertDoesNotExist()
+
+            // Re-open sheet and save again -> dialog does NOT appear a second time
+            showSheet.value = true
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("commitment_name_input").performClick()
+            composeTestRule.onNodeWithTag("commitment_name_input").performTextInput("Phone Bill")
+            composeTestRule.onNodeWithTag("commitment_amount_input").performTextInput("499")
+            composeTestRule.onNodeWithTag("save_commitment_btn").performClick()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            assertEquals(2, saveCount)
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertDoesNotExist()
+        }
+    }
+
+    // =========================================================================
+    // FOLLOW-UP 3: Separate auto_backup_dialog_shown flag for Dashboard dialog
+    // =========================================================================
+
+    @Test
+    fun followup3_upgradedUserWithDisclosureTrueAndDialogFalse_stillShowsAutoBackupDialogOnce() {
+        runBlocking {
+            settingsRepository.setOnboardingCompleted(true)
+            settingsRepository.setHasShownAutoBackupDisclosure(true)
+            settingsRepository.setHasShownAutoBackupDialog(false)
+
+            val initial = settingsRepository.settingsFlow.first()
+            assertTrue(initial.hasShownAutoBackupDisclosure)
+            assertFalse(initial.hasShownAutoBackupDialog)
+
+            val vm = DashboardViewModel(repository, settingsRepository)
+            try {
+                composeTestRule.setContent {
+                    MyApplicationTheme {
+                        DashboardScreen(
+                            viewModel = vm,
+                            onNavigateToExpenses = { _, _ -> },
+                            onNavigateToSettings = {}
+                        )
+                    }
+                }
+                ShadowLooper.idleMainLooper()
+                composeTestRule.waitForIdle()
+
+                // Even though hasShownAutoBackupDisclosure is true, dialog appears because hasShownAutoBackupDialog is false
+                composeTestRule.onNodeWithTag("auto_backup_disclosure_dialog").assertIsDisplayed()
+
+                composeTestRule.onNodeWithTag("auto_backup_disclosure_keep_on_btn").performClick()
+                ShadowLooper.idleMainLooper()
+                composeTestRule.waitForIdle()
+
+                composeTestRule.onNodeWithTag("auto_backup_disclosure_dialog").assertDoesNotExist()
+                assertTrue(
+                    "hasShownAutoBackupDialog must be true after dismissing dialog",
+                    settingsRepository.settingsFlow.first().hasShownAutoBackupDialog
+                )
+            } finally {
+                vm.viewModelScope.cancel()
+            }
+        }
+    }
+
+    // =========================================================================
+    // FOLLOW-UP 4: Settings caption matches Daily Auto-Save switch state
+    // =========================================================================
+
+    @Test
+    fun followup4_settingsAutoSaveCaption_matchesSwitchOnAndOffStates() {
+        runBlocking {
+            val vm = SettingsViewModel(repository, settingsRepository, database)
+            try {
+                composeTestRule.setContent {
+                    MyApplicationTheme {
+                        SettingsScreen(viewModel = vm)
+                    }
+                }
+                composeTestRule.waitForIdle()
+
+                val captionNode = composeTestRule.onNodeWithTag("settings_auto_save_disclosure_caption", useUnmergedTree = true)
+                captionNode.performScrollTo()
+                captionNode.assertIsDisplayed()
+
+                // 1. Default ON state
+                captionNode.assertTextContains(
+                    "Saves a readable CSV of all your transactions to Downloads/SilentSums/auto/backup.csv. Anyone who can open your files can read it."
+                )
+
+                // 2. Switched OFF state
+                settingsRepository.setAutoBackupEnabled(false)
+                ShadowLooper.idleMainLooper()
+                composeTestRule.waitForIdle()
+
+                captionNode.assertTextContains(
+                    "Off. When on, it saves a readable CSV of all your transactions to Downloads/SilentSums/auto/backup.csv. Anyone who can open your files can read it."
+                )
+
+                // 3. Switched back ON
+                settingsRepository.setAutoBackupEnabled(true)
+                ShadowLooper.idleMainLooper()
+                composeTestRule.waitForIdle()
+
+                captionNode.assertTextContains(
+                    "Saves a readable CSV of all your transactions to Downloads/SilentSums/auto/backup.csv. Anyone who can open your files can read it."
+                )
+            } finally {
+                vm.viewModelScope.cancel()
+            }
+        }
+    }
+
+    // =========================================================================
+    // FOLLOW-UP 5: Only ask permission when reminders enabled & when really shown
+    // =========================================================================
+
+    @Test
+    fun followup5_commitmentSave_skipsDialogWhenRemindersOff_andSheetClosedEarlyLeavesAskedFlagFalse() {
+        runBlocking {
+            val accounts = listOf(com.example.data.model.Account(id = 1L, name = "HDFC Bank", accountType = "BANK"))
+            var saveCount = 0
+            val showSheet = androidx.compose.runtime.mutableStateOf(true)
+
+            // 1. dueRemindersEnabled = false -> no rationale dialog shown, flag stays false
+            settingsRepository.setDueRemindersEnabled(false)
+            composeTestRule.setContent {
+                MyApplicationTheme {
+                    if (showSheet.value) {
+                        com.example.ui.commitment.AddEditCommitmentSheet(
+                            commitment = null,
+                            accounts = accounts,
+                            categories = emptyList(),
+                            onDismiss = { showSheet.value = false },
+                            onSave = { saveCount++ }
+                        )
+                    }
+                }
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("commitment_name_input").performClick()
+            composeTestRule.onNodeWithTag("commitment_name_input").performTextInput("Water Bill")
+            composeTestRule.onNodeWithTag("commitment_amount_input").performTextInput("350")
+            composeTestRule.onNodeWithTag("save_commitment_btn").performClick()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            assertEquals(1, saveCount)
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertDoesNotExist()
+            assertFalse(
+                "hasAskedCommitmentNotificationPermission must stay false when dueRemindersEnabled is false",
+                settingsRepository.settingsFlow.first().hasAskedCommitmentNotificationPermission
+            )
+
+            // 2. dueRemindersEnabled = true -> dialog shown; closing sheet early without tapping Continue/Skip leaves flag false
+            settingsRepository.setDueRemindersEnabled(true)
+            showSheet.value = false
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+            showSheet.value = true
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("commitment_name_input").performClick()
+            composeTestRule.onNodeWithTag("commitment_name_input").performTextInput("Gas Bill")
+            composeTestRule.onNodeWithTag("commitment_amount_input").performTextInput("800")
+            composeTestRule.onNodeWithTag("save_commitment_btn").performClick()
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            assertEquals(2, saveCount)
+            composeTestRule.onNodeWithTag("commitment_notif_rationale_dialog").assertIsDisplayed()
+            assertFalse(
+                "hasAskedCommitmentNotificationPermission must remain false while dialog is merely queued/open",
+                settingsRepository.settingsFlow.first().hasAskedCommitmentNotificationPermission
+            )
+
+            // Simulate sheet closing early before user taps Continue/Skip or dismisses dialog
+            showSheet.value = false
+            ShadowLooper.idleMainLooper()
+            composeTestRule.waitForIdle()
+
+            assertFalse(
+                "Closing sheet early without interacting with rationale dialog must leave hasAskedCommitmentNotificationPermission false",
+                settingsRepository.settingsFlow.first().hasAskedCommitmentNotificationPermission
+            )
+        }
     }
 }

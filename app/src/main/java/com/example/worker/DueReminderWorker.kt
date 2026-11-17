@@ -68,6 +68,7 @@ class DueReminderWorker(
             if (!settings.dueRemindersEnabled) return
 
             createNotificationChannel(context)
+            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
             val todayStart = Calendar.getInstance().apply {
                 timeInMillis = now
@@ -179,9 +180,10 @@ class DueReminderWorker(
                     }
                 }
 
-                showNotification(context, c.id.toInt(), title, body)
-                activeMarkers.add(marker)
-                markersChanged = true
+                if (showNotification(context, c.id.toInt(), title, body)) {
+                    activeMarkers.add(marker)
+                    markersChanged = true
+                }
             }
 
             if (markersChanged) {
@@ -209,8 +211,8 @@ class DueReminderWorker(
             notificationId: Int,
             title: String,
             message: String
-        ) {
-            try {
+        ): Boolean {
+            return try {
                 createNotificationChannel(context)
                 val intent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -245,9 +247,13 @@ class DueReminderWorker(
 
                 val manager = NotificationManagerCompat.from(context)
                 manager.notify(notificationId, builder.build())
+                true
             } catch (_: SecurityException) {
                 // Permission not granted; handled gracefully
-            } catch (_: Exception) {}
+                false
+            } catch (_: Exception) {
+                false
+            }
         }
     }
 }

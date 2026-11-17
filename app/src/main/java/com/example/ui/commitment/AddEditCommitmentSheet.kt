@@ -139,12 +139,18 @@ fun AddEditCommitmentSheet(
     LaunchedEffect(commitment) {
         isUpdateSuccess = false
         errorText = null
+        if (settingsRepo.cachedSettings == null) {
+            settingsRepo.settingsFlow.first()
+        }
     }
 
     if (showReminderPermissionExplanation) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = {
                 showReminderPermissionExplanation = false
+                coroutineScope.launch {
+                    settingsRepo.setHasAskedCommitmentNotificationPermission(true)
+                }
                 if (isUpdateSuccess) onDismiss()
             },
             title = { Text("Enable Due Reminders") },
@@ -159,6 +165,9 @@ fun AddEditCommitmentSheet(
                 Button(
                     onClick = {
                         showReminderPermissionExplanation = false
+                        coroutineScope.launch {
+                            settingsRepo.setHasAskedCommitmentNotificationPermission(true)
+                        }
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                             try {
                                 notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -183,6 +192,9 @@ fun AddEditCommitmentSheet(
                 androidx.compose.material3.TextButton(
                     onClick = {
                         showReminderPermissionExplanation = false
+                        coroutineScope.launch {
+                            settingsRepo.setHasAskedCommitmentNotificationPermission(true)
+                        }
                         if (isUpdateSuccess) onDismiss()
                     },
                     modifier = Modifier.testTag("commitment_notif_rationale_skip_btn")
@@ -727,24 +739,23 @@ fun AddEditCommitmentSheet(
                         onSave(toSave)
                         CommitmentViewModel.clearSessionDraft()
                         isUpdateSuccess = true
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                        val needsPermissionCheck = !isEditing &&
+                            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
                             androidx.core.content.ContextCompat.checkSelfPermission(
                                 context,
                                 android.Manifest.permission.POST_NOTIFICATIONS
                             ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-                        ) {
-                            val currentSettings = settingsRepo.cachedSettings
-                                ?: kotlinx.coroutines.runBlocking {
-                                    settingsRepo.settingsFlow.first()
-                                }
-                            if (!currentSettings.hasAskedCommitmentNotificationPermission) {
-                                kotlinx.coroutines.runBlocking {
-                                    settingsRepo.setHasAskedCommitmentNotificationPermission(true)
-                                }
-                                showReminderPermissionExplanation = true
-                            }
+                        val cached = settingsRepo.cachedSettings
+                        if (needsPermissionCheck && cached != null && cached.dueRemindersEnabled && !cached.hasAskedCommitmentNotificationPermission) {
+                            showReminderPermissionExplanation = true
                         }
                         coroutineScope.launch {
+                            if (needsPermissionCheck) {
+                                val currentSettings = cached ?: settingsRepo.settingsFlow.first()
+                                if (currentSettings.dueRemindersEnabled && !currentSettings.hasAskedCommitmentNotificationPermission) {
+                                    showReminderPermissionExplanation = true
+                                }
+                            }
                             delay(1000L)
                             if (!showReminderPermissionExplanation) {
                                 onDismiss()

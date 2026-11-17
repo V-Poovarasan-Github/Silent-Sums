@@ -37,6 +37,7 @@ data class AppSettings(
     val lastDataMutationTimestamp: Long = 0L,
     val autoSaveTreeUri: String = "",
     val hasShownAutoBackupDisclosure: Boolean = false,
+    val hasShownAutoBackupDialog: Boolean = false,
     val hasShownAutoBackupNotification: Boolean = false,
     val hasAskedCommitmentNotificationPermission: Boolean = false,
     val budgetsCardVisible: Boolean = true,
@@ -84,6 +85,7 @@ class AppSettingsRepository(val context: Context) {
         val KEY_LAST_DATA_MUTATION = longPreferencesKey("last_data_mutation")
         val KEY_AUTO_SAVE_TREE_URI = stringPreferencesKey("auto_save_tree_uri")
         val KEY_DISCLOSURE_SHOWN = booleanPreferencesKey("auto_backup_disclosure_shown")
+        val KEY_AUTO_BACKUP_DIALOG_SHOWN = booleanPreferencesKey("auto_backup_dialog_shown")
         val KEY_AUTO_BACKUP_NOTIFICATION_SHOWN = booleanPreferencesKey("auto_backup_notification_shown")
         val KEY_ASKED_COMMITMENT_NOTIF_PERMISSION = booleanPreferencesKey("asked_commitment_notif_permission")
         val KEY_BUDGETS_CARD_VISIBLE = booleanPreferencesKey("budgets_card_visible")
@@ -100,6 +102,9 @@ class AppSettingsRepository(val context: Context) {
         val KEY_PIN_LOCKOUT_START_WALL_MS = longPreferencesKey("pin_lockout_start_wall_ms")
         val KEY_PIN_LOCKOUT_END_WALL_MS = longPreferencesKey("pin_lockout_end_wall_ms")
         val KEY_REMINDER_LAST_NOTIFIED = stringSetPreferencesKey("reminder_last_notified")
+
+        @Volatile
+        private var sharedCachedSettings: AppSettings? = null
     }
 
     val currencySymbolFlow: StateFlow<String>
@@ -108,12 +113,14 @@ class AppSettingsRepository(val context: Context) {
     val currencySymbol: MutableStateFlow<String>
         get() = _currencySymbolFlow
 
-    @Volatile
-    var cachedSettings: AppSettings? = null
-        private set
+    var cachedSettings: AppSettings?
+        get() = sharedCachedSettings
+        private set(value) {
+            sharedCachedSettings = value
+        }
 
     fun clearLoadedCacheForTesting() {
-        cachedSettings = null
+        sharedCachedSettings = null
     }
 
     private fun mapPreferencesToSettings(preferences: Preferences): AppSettings {
@@ -144,6 +151,7 @@ class AppSettingsRepository(val context: Context) {
             lastDataMutationTimestamp = preferences[KEY_LAST_DATA_MUTATION] ?: 0L,
             autoSaveTreeUri = preferences[KEY_AUTO_SAVE_TREE_URI] ?: "",
             hasShownAutoBackupDisclosure = preferences[KEY_DISCLOSURE_SHOWN] ?: false,
+            hasShownAutoBackupDialog = preferences[KEY_AUTO_BACKUP_DIALOG_SHOWN] ?: false,
             hasShownAutoBackupNotification = preferences[KEY_AUTO_BACKUP_NOTIFICATION_SHOWN] ?: false,
             hasAskedCommitmentNotificationPermission = preferences[KEY_ASKED_COMMITMENT_NOTIF_PERMISSION] ?: false,
             budgetsCardVisible = preferences[KEY_BUDGETS_CARD_VISIBLE] ?: true,
@@ -310,7 +318,11 @@ class AppSettingsRepository(val context: Context) {
     }
 
     suspend fun setDueRemindersEnabled(enabled: Boolean) {
-        context.dataStore.edit { it[KEY_DUE_REMINDERS] = enabled }
+        cachedSettings = cachedSettings?.copy(dueRemindersEnabled = enabled)
+        context.dataStore.edit {
+            it[KEY_DUE_REMINDERS] = enabled
+            mapPreferencesToSettings(it)
+        }
     }
 
     suspend fun setAutoBackupEnabled(enabled: Boolean) {
@@ -366,8 +378,23 @@ class AppSettingsRepository(val context: Context) {
     }
 
     suspend fun setHasShownAutoBackupDisclosure(shown: Boolean) {
+        cachedSettings = cachedSettings?.copy(hasShownAutoBackupDisclosure = shown)
         context.dataStore.edit {
             it[KEY_DISCLOSURE_SHOWN] = shown
+            mapPreferencesToSettings(it)
+        }
+    }
+
+    suspend fun setHasShownAutoBackupDialog(shown: Boolean) {
+        cachedSettings = cachedSettings?.copy(
+            hasShownAutoBackupDialog = shown,
+            hasShownAutoBackupDisclosure = if (shown) true else (cachedSettings?.hasShownAutoBackupDisclosure ?: false)
+        )
+        context.dataStore.edit {
+            it[KEY_AUTO_BACKUP_DIALOG_SHOWN] = shown
+            if (shown) {
+                it[KEY_DISCLOSURE_SHOWN] = true
+            }
             mapPreferencesToSettings(it)
         }
     }

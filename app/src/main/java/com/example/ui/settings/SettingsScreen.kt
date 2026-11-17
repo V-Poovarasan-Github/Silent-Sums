@@ -1048,7 +1048,11 @@ fun SettingsScreen(
                                     state.settings.autoSaveTreeUri
                                 )
                                 Text(
-                                    text = "Saves a readable CSV of all your transactions to $realAutoSaveFilePath. Anyone who can open your files can read it.",
+                                    text = if (state.settings.autoBackupEnabled) {
+                                        "Saves a readable CSV of all your transactions to $realAutoSaveFilePath. Anyone who can open your files can read it."
+                                    } else {
+                                        "Off. When on, it saves a readable CSV of all your transactions to $realAutoSaveFilePath. Anyone who can open your files can read it."
+                                    },
                                     fontSize = 11.sp,
                                     color = TextMuted,
                                     modifier = Modifier

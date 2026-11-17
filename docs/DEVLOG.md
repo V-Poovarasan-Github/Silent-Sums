@@ -218,7 +218,7 @@
 
 ---
 
-## v1.1 hardening (branch `v1.1-hardening`)
+## v1.1 hardening (commit dd9713b on `main`)
 
 1. **Item 1 — Auto-save visibility (`MediaStoreWriter.kt`, `AppSettingsRepository.kt`, `AutoBackupWorker.kt`, `SettingsScreen.kt`, `DashboardScreen.kt`, `PaisaTrackApp.kt`, `V1_1HardeningTest.kt`)**:
    - Added `MediaStoreWriter.displayAutoBackupFilePath` (using `resolveWriteRoot`, `AUTO_SUBFOLDER`, and `AUTO_BACKUP_FILE`), a permanent 11sp disclosure caption under Daily Auto-Save in Settings, and a one-time Dashboard `AlertDialog` after onboarding (`hasShownAutoBackupDisclosure`, separated from `hasShownAutoBackupNotification`). Added 3 tests (`item1_settingsCaptionShowsRealPath_defaultCustomAndInvalidFallback`, `item1_dashboardOneTimeDialog_showsOnceAfterOnboardingAndPersistsFlag`, `item1_dashboardOneTimeDialog_settingsButtonOpensSettingsAndPersistsFlag`).
@@ -243,3 +243,22 @@
 11. **Measured Test Result & Invariants**:
     - `gradle testDebugUnitTest --console=plain`: **428 total tests** across **43 test classes** (417 existing + 11 new in `V1_1HardeningTest`), **0 failed**, **0 skipped**.
     - Auto-save stays ON by default (`autoBackupEnabled = true`, `autoSaveOnClose = true`) and is now disclosed in the app; reminder notifications are private on the lock screen; Room schema is still v10.
+
+---
+
+## v1.1 follow-up
+
+1. **Item 1 — Preserve reminder markers when notifications are disabled (`DueReminderWorker.kt`, `V1_1HardeningTest.kt`)**:
+   - Added `NotificationManagerCompat.from(context).areNotificationsEnabled()` pre-check in `DueReminderWorker.checkAndNotify`, changed `showNotification` to return `Boolean`, and recorded daily de-duplication markers only when `showNotification` returns `true`.
+2. **Item 2 — Remove main-thread `runBlocking` in UI handlers (`DashboardScreen.kt`, `AddEditCommitmentSheet.kt`, `AppSettingsRepository.kt`, `V1_1HardeningTest.kt`)**:
+   - Replaced the 3 `runBlocking` calls in `DashboardScreen.kt` and 2 `runBlocking` calls in `AddEditCommitmentSheet.kt` with `coroutineScope.launch`, reading `cachedSettings` first with coroutine fallback and preserving the 1000 ms auto-dismiss contract.
+3. **Item 3 — Dedicated flag for in-app auto-save dialog (`AppSettingsRepository.kt`, `DashboardScreen.kt`, `V1_1HardeningTest.kt`)**:
+   - Added `auto_backup_dialog_shown` (`hasShownAutoBackupDialog`, default `false`) for the Dashboard auto-backup disclosure dialog so users upgrading from v1.0.0 with `hasShownAutoBackupDisclosure = true` still see the dialog once.
+4. **Item 4 — Switch-aware Settings auto-save caption (`SettingsScreen.kt`, `V1_1HardeningTest.kt`)**:
+   - Updated `settings_auto_save_disclosure_caption` to prefix `"Off. When on, it saves a readable CSV..."` when `autoBackupEnabled` is `false` while keeping `"Saves a readable CSV..."` when `true`.
+5. **Item 5 — Contextual commitment notification prompt & deferred flag persistence (`AddEditCommitmentSheet.kt`, `AppSettingsRepository.kt`, `V1_1HardeningTest.kt`)**:
+   - Gated the commitment notification rationale prompt on `dueRemindersEnabled` and persisted `hasAskedCommitmentNotificationPermission = true` only when the user taps `"Continue"`, `"Skip"`, or dismisses the dialog.
+6. **Item 6 — Executable Gradle wrapper (`gradlew`)**:
+   - Updated `gradlew` file mode in git index to `100755`.
+7. **Measured Test Result**:
+   - `gradle :app:testDebugUnitTest --console=plain`: **433 total tests** across **43 test classes** (417 baseline + 11 v1.1 hardening + 5 v1.1 follow-up in `V1_1HardeningTest`), **0 failed**, **0 skipped**.

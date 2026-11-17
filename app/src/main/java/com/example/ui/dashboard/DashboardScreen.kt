@@ -368,7 +368,7 @@ fun DashboardScreen(
     }
 
     var autoBackupDisclosureDismissed by remember { mutableStateOf(false) }
-    if (appSettings.onboardingCompleted && !appSettings.demoMode && !appSettings.hasShownAutoBackupDisclosure && !autoBackupDisclosureDismissed) {
+    if (appSettings.onboardingCompleted && !appSettings.demoMode && !appSettings.hasShownAutoBackupDialog && !autoBackupDisclosureDismissed) {
         val autoBackupPath = com.example.importbackup.MediaStoreWriter.displayAutoBackupFilePath(
             context,
             appSettings.autoSaveTreeUri
@@ -376,8 +376,8 @@ fun DashboardScreen(
         AlertDialog(
             onDismissRequest = {
                 autoBackupDisclosureDismissed = true
-                kotlinx.coroutines.runBlocking {
-                    appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                coroutineScope.launch {
+                    appSettingsRepo.setHasShownAutoBackupDialog(true)
                 }
             },
             title = { Text("Your data is backed up to a CSV") },
@@ -391,8 +391,8 @@ fun DashboardScreen(
                 Button(
                     onClick = {
                         autoBackupDisclosureDismissed = true
-                        kotlinx.coroutines.runBlocking {
-                            appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                        coroutineScope.launch {
+                            appSettingsRepo.setHasShownAutoBackupDialog(true)
                         }
                     },
                     modifier = Modifier.testTag("auto_backup_disclosure_keep_on_btn")
@@ -404,8 +404,8 @@ fun DashboardScreen(
                 TextButton(
                     onClick = {
                         autoBackupDisclosureDismissed = true
-                        kotlinx.coroutines.runBlocking {
-                            appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                        coroutineScope.launch {
+                            appSettingsRepo.setHasShownAutoBackupDialog(true)
                         }
                         onNavigateToSettings?.invoke()
                     },
