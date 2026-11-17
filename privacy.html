@@ -154,7 +154,7 @@
     <p>SilentSums requests permissions only for specific local features that you initiate:</p>
     <ul>
       <li><b>Microphone (<code>RECORD_AUDIO</code>):</b> Requested only when you tap the Voice Memo button on a transaction entry to record an offline audio note.</li>
-      <li><b>Notifications (<code>POST_NOTIFICATIONS</code>):</b> Requested on Android 13+ when you turn on local Due Reminders or Auto-Backup alerts in Settings. Reminder notifications include the name and amount of the item that is due, and Android may show them on your lock screen depending on your notification settings.</li>
+      <li><b>Notifications (<code>POST_NOTIFICATIONS</code>):</b> Requested on Android 13+ when you turn on local Due Reminders or Auto-Backup alerts in Settings, or when you save your first commitment while Due Reminders is on. Reminders are sent when an item is overdue, due today or due tomorrow. On a secured lock screen, Android shows only a generic message ("You have a payment or IOU due.") and the item name and amount appear after you unlock. With Privacy Mode on, the amount is also masked in the notification. If your device has no screen lock, or your notification settings differ, Android may show the full text.</li>
       <li><b>Biometrics (<code>USE_BIOMETRIC</code>):</b> Used locally through Android's <code>BiometricPrompt</code> if you enable fingerprint/biometric unlock in Settings.</li>
       <li><b>Legacy storage (<code>WRITE_EXTERNAL_STORAGE</code>, Android 9 / API 28 and below only):</b> Used on older Android versions when saving CSV or JSON files (auto-saves and exports) to your <code>Downloads</code> folder.</li>
     </ul>

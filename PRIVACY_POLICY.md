@@ -30,7 +30,7 @@ When you use SilentSums, the app stores the information you enter directly on yo
 SilentSums requests permissions only for specific local features that you initiate:
 
 - **Microphone (`RECORD_AUDIO`)**: Requested only when you tap the Voice Memo button on a transaction entry to record an offline audio note.
-- **Notifications (`POST_NOTIFICATIONS`)**: Requested on Android 13+ when you turn on local Due Reminders or Auto-Backup alerts in Settings. Reminder notifications include the name and amount of the item that is due, and Android may show them on your lock screen depending on your notification settings.
+- **Notifications (`POST_NOTIFICATIONS`)**: Requested on Android 13+ when you turn on local Due Reminders or Auto-Backup alerts in Settings, or when you save your first commitment while Due Reminders is on. Reminders are sent when an item is overdue, due today or due tomorrow. On a secured lock screen, Android shows only a generic message ("You have a payment or IOU due.") and the item name and amount appear after you unlock. With Privacy Mode on, the amount is also masked in the notification. If your device has no screen lock, or your notification settings differ, Android may show the full text.
 - **Biometrics (`USE_BIOMETRIC`)**: Used locally through Android's `BiometricPrompt` if you enable fingerprint/biometric unlock in Settings.
 - **Legacy Storage (`WRITE_EXTERNAL_STORAGE`, Android 9 / API 28 and below only)**: Used on older Android versions when saving CSV or JSON files (auto-saves and exports) to your `Downloads` folder.
 
