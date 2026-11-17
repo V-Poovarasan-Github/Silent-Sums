@@ -109,18 +109,28 @@ object PinHasher {
     /**
      * Computes remaining lockout time in ms using elapsedRealtime when in the same boot session,
      * falling back to wall-clock end time if a reboot occurred (currentElapsedMs < lockoutStartElapsedMs).
+     * If a reboot occurred and the wall clock was set earlier than lockoutStartWallMs, the full
+     * lockout duration is treated as remaining so moving the clock back cannot shorten the lockout.
      */
     fun computeRemainingLockoutMs(
         lockoutStartElapsedMs: Long,
         lockoutEndElapsedMs: Long,
         lockoutEndWallMs: Long,
         currentElapsedMs: Long,
-        currentWallMs: Long
+        currentWallMs: Long,
+        lockoutStartWallMs: Long = 0L
     ): Long {
         if (lockoutEndElapsedMs <= 0L && lockoutEndWallMs <= 0L) return 0L
         val rebooted = lockoutStartElapsedMs > 0L && currentElapsedMs < lockoutStartElapsedMs
         return if (!rebooted && lockoutEndElapsedMs > 0L) {
             (lockoutEndElapsedMs - currentElapsedMs).coerceAtLeast(0L)
+        } else if (rebooted && lockoutStartWallMs > 0L && currentWallMs < lockoutStartWallMs) {
+            val fullDuration = if (lockoutEndElapsedMs > lockoutStartElapsedMs) {
+                lockoutEndElapsedMs - lockoutStartElapsedMs
+            } else {
+                (lockoutEndWallMs - lockoutStartWallMs).coerceAtLeast(0L)
+            }
+            fullDuration.coerceAtLeast(0L)
         } else {
             (lockoutEndWallMs - currentWallMs).coerceAtLeast(0L)
         }

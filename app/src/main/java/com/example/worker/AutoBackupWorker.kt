@@ -91,9 +91,9 @@ class AutoBackupWorker(
                 settingsRepo.recordDataMutation(currentStamp)
 
                 // First-time non-blocking disclosure
-                if (!settings.hasShownAutoBackupDisclosure) {
+                if (!settings.hasShownAutoBackupNotification) {
                     showFirstTimeDisclosure(context, targetPath)
-                    settingsRepo.setHasShownAutoBackupDisclosure(true)
+                    settingsRepo.setHasShownAutoBackupNotification(true)
                 }
 
                 Result.success()

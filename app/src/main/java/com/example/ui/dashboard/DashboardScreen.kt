@@ -230,6 +230,7 @@ fun DashboardScreen(
     onNavigateToExpensesWithFilter: ((FilterState) -> Unit)? = null,
     onNavigateToEntry: ((type: String) -> Unit)? = null,
     onNavigateToTransferPrefill: ((fromAccountId: Long?, toAccountId: Long, amountText: String) -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null,
     noticeDispatcher: com.example.ui.common.SingleFlightNoticeDispatcher? = null,
     modifier: Modifier = Modifier
 ) {
@@ -364,6 +365,57 @@ fun DashboardScreen(
             onDismiss = { showDemoExitAuthGate = false }
         )
         return
+    }
+
+    var autoBackupDisclosureDismissed by remember { mutableStateOf(false) }
+    if (appSettings.onboardingCompleted && !appSettings.demoMode && !appSettings.hasShownAutoBackupDisclosure && !autoBackupDisclosureDismissed) {
+        val autoBackupPath = com.example.importbackup.MediaStoreWriter.displayAutoBackupFilePath(
+            context,
+            appSettings.autoSaveTreeUri
+        )
+        AlertDialog(
+            onDismissRequest = {
+                autoBackupDisclosureDismissed = true
+                kotlinx.coroutines.runBlocking {
+                    appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                }
+            },
+            title = { Text("Your data is backed up to a CSV") },
+            text = {
+                Text(
+                    "SilentSums keeps a readable copy of your transactions in $autoBackupPath, updated daily and when you leave the app. It is a plain file, so anyone who can open your files can read it. Keep it on, choose another folder, or turn it off in Settings.",
+                    modifier = Modifier.testTag("auto_backup_disclosure_dialog_body")
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        autoBackupDisclosureDismissed = true
+                        kotlinx.coroutines.runBlocking {
+                            appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                        }
+                    },
+                    modifier = Modifier.testTag("auto_backup_disclosure_keep_on_btn")
+                ) {
+                    Text("Keep on")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        autoBackupDisclosureDismissed = true
+                        kotlinx.coroutines.runBlocking {
+                            appSettingsRepo.setHasShownAutoBackupDisclosure(true)
+                        }
+                        onNavigateToSettings?.invoke()
+                    },
+                    modifier = Modifier.testTag("auto_backup_disclosure_settings_btn")
+                ) {
+                    Text("Settings")
+                }
+            },
+            modifier = Modifier.testTag("auto_backup_disclosure_dialog")
+        )
     }
 
     CompositionLocalProvider(LocalHideBalances provides state.hideBalances) {

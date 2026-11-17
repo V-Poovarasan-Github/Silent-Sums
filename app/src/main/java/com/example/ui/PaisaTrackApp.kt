@@ -450,6 +450,9 @@ fun PaisaTrackApp(
                                         initialType = "TRANSFER",
                                         initialAmountText = amountText
                                     )
+                                },
+                                onNavigateToSettings = {
+                                    currentDestination = AppDestination.Settings
                                 }
                             )
                         }

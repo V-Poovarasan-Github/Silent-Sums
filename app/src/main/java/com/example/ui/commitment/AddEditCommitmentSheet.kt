@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.example.ui.theme.IncomeGreen
 import androidx.compose.runtime.remember
@@ -129,10 +130,68 @@ fun AddEditCommitmentSheet(
     var errorText by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     var isUpdateSuccess by remember { mutableStateOf(false) }
+    var showReminderPermissionExplanation by remember { mutableStateOf(false) }
+    val settingsRepo = remember(context) { com.example.data.datastore.AppSettingsRepository(context.applicationContext) }
+    val notificationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { _ -> }
 
     LaunchedEffect(commitment) {
         isUpdateSuccess = false
         errorText = null
+    }
+
+    if (showReminderPermissionExplanation) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                showReminderPermissionExplanation = false
+                if (isUpdateSuccess) onDismiss()
+            },
+            title = { Text("Enable Due Reminders") },
+            text = {
+                Text(
+                    "Allow notifications so SilentSums can alert you when recurring bills or dues are approaching.",
+                    fontSize = 13.sp,
+                    modifier = Modifier.testTag("commitment_notif_rationale_text")
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showReminderPermissionExplanation = false
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                            try {
+                                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            } catch (_: IllegalStateException) {
+                                (com.example.data.DatabaseProvider.findActivity(context) as? android.app.Activity)?.let { act ->
+                                    androidx.core.app.ActivityCompat.requestPermissions(
+                                        act,
+                                        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                                        1001
+                                    )
+                                }
+                            }
+                        }
+                        if (isUpdateSuccess) onDismiss()
+                    },
+                    modifier = Modifier.testTag("commitment_notif_rationale_continue_btn")
+                ) {
+                    Text("Continue")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showReminderPermissionExplanation = false
+                        if (isUpdateSuccess) onDismiss()
+                    },
+                    modifier = Modifier.testTag("commitment_notif_rationale_skip_btn")
+                ) {
+                    Text("Skip")
+                }
+            },
+            modifier = Modifier.testTag("commitment_notif_rationale_dialog")
+        )
     }
 
     if (showCalculator) {
@@ -668,9 +727,28 @@ fun AddEditCommitmentSheet(
                         onSave(toSave)
                         CommitmentViewModel.clearSessionDraft()
                         isUpdateSuccess = true
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                            androidx.core.content.ContextCompat.checkSelfPermission(
+                                context,
+                                android.Manifest.permission.POST_NOTIFICATIONS
+                            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                        ) {
+                            val currentSettings = settingsRepo.cachedSettings
+                                ?: kotlinx.coroutines.runBlocking {
+                                    settingsRepo.settingsFlow.first()
+                                }
+                            if (!currentSettings.hasAskedCommitmentNotificationPermission) {
+                                kotlinx.coroutines.runBlocking {
+                                    settingsRepo.setHasAskedCommitmentNotificationPermission(true)
+                                }
+                                showReminderPermissionExplanation = true
+                            }
+                        }
                         coroutineScope.launch {
                             delay(1000L)
-                            onDismiss()
+                            if (!showReminderPermissionExplanation) {
+                                onDismiss()
+                            }
                         }
                     } catch (e: Exception) {
                         errorText = e.message ?: "Failed to save commitment"

@@ -200,6 +200,19 @@ object MediaStoreWriter {
         )
     }
 
+    /**
+     * Returns the real human-readable path where auto-save will write its CSV
+     * (e.g., "Downloads/SilentSums/auto/backup.csv" or "<custom folder>/auto/backup.csv"),
+     * falling back to the default Downloads path if the custom folder is unset, invalid, or revoked.
+     */
+    fun displayAutoBackupFilePath(
+        context: Context,
+        customTreeUriString: String? = null
+    ): String {
+        val root = resolveWriteRoot(context, customTreeUriString)
+        return "${root.displayPath}/$AUTO_SUBFOLDER/$AUTO_BACKUP_FILE"
+    }
+
     fun isLegacyFolder(pathOrName: String): Boolean {
         val clean = pathOrName.trim().lowercase()
         return LEGACY_ROOT_FOLDERS.any { legacy ->

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,8 @@ data class AppSettings(
     val lastDataMutationTimestamp: Long = 0L,
     val autoSaveTreeUri: String = "",
     val hasShownAutoBackupDisclosure: Boolean = false,
+    val hasShownAutoBackupNotification: Boolean = false,
+    val hasAskedCommitmentNotificationPermission: Boolean = false,
     val budgetsCardVisible: Boolean = true,
     val quickLogChipsEnabled: Boolean = true,
     val lakhFormatEnabled: Boolean = false,
@@ -49,7 +52,9 @@ data class AppSettings(
     val pinFailedAttempts: Int = 0,
     val pinLockoutStartElapsedMs: Long = 0L,
     val pinLockoutEndElapsedMs: Long = 0L,
-    val pinLockoutEndWallMs: Long = 0L
+    val pinLockoutStartWallMs: Long = 0L,
+    val pinLockoutEndWallMs: Long = 0L,
+    val reminderLastNotified: Set<String> = emptySet()
 )
 
 class AppSettingsRepository(val context: Context) {
@@ -79,6 +84,8 @@ class AppSettingsRepository(val context: Context) {
         val KEY_LAST_DATA_MUTATION = longPreferencesKey("last_data_mutation")
         val KEY_AUTO_SAVE_TREE_URI = stringPreferencesKey("auto_save_tree_uri")
         val KEY_DISCLOSURE_SHOWN = booleanPreferencesKey("auto_backup_disclosure_shown")
+        val KEY_AUTO_BACKUP_NOTIFICATION_SHOWN = booleanPreferencesKey("auto_backup_notification_shown")
+        val KEY_ASKED_COMMITMENT_NOTIF_PERMISSION = booleanPreferencesKey("asked_commitment_notif_permission")
         val KEY_BUDGETS_CARD_VISIBLE = booleanPreferencesKey("budgets_card_visible")
         val KEY_QUICK_LOG_CHIPS = booleanPreferencesKey("quick_log_chips_enabled")
         val KEY_LAKH_FORMAT = booleanPreferencesKey("lakh_format_enabled")
@@ -90,7 +97,9 @@ class AppSettingsRepository(val context: Context) {
         val KEY_PIN_FAILED_ATTEMPTS = intPreferencesKey("pin_failed_attempts")
         val KEY_PIN_LOCKOUT_START_ELAPSED_MS = longPreferencesKey("pin_lockout_start_elapsed_ms")
         val KEY_PIN_LOCKOUT_END_ELAPSED_MS = longPreferencesKey("pin_lockout_end_elapsed_ms")
+        val KEY_PIN_LOCKOUT_START_WALL_MS = longPreferencesKey("pin_lockout_start_wall_ms")
         val KEY_PIN_LOCKOUT_END_WALL_MS = longPreferencesKey("pin_lockout_end_wall_ms")
+        val KEY_REMINDER_LAST_NOTIFIED = stringSetPreferencesKey("reminder_last_notified")
     }
 
     val currencySymbolFlow: StateFlow<String>
@@ -135,6 +144,8 @@ class AppSettingsRepository(val context: Context) {
             lastDataMutationTimestamp = preferences[KEY_LAST_DATA_MUTATION] ?: 0L,
             autoSaveTreeUri = preferences[KEY_AUTO_SAVE_TREE_URI] ?: "",
             hasShownAutoBackupDisclosure = preferences[KEY_DISCLOSURE_SHOWN] ?: false,
+            hasShownAutoBackupNotification = preferences[KEY_AUTO_BACKUP_NOTIFICATION_SHOWN] ?: false,
+            hasAskedCommitmentNotificationPermission = preferences[KEY_ASKED_COMMITMENT_NOTIF_PERMISSION] ?: false,
             budgetsCardVisible = preferences[KEY_BUDGETS_CARD_VISIBLE] ?: true,
             quickLogChipsEnabled = preferences[KEY_QUICK_LOG_CHIPS] ?: true,
             lakhFormatEnabled = preferences[KEY_LAKH_FORMAT] ?: false,
@@ -148,7 +159,9 @@ class AppSettingsRepository(val context: Context) {
             pinFailedAttempts = preferences[KEY_PIN_FAILED_ATTEMPTS] ?: 0,
             pinLockoutStartElapsedMs = preferences[KEY_PIN_LOCKOUT_START_ELAPSED_MS] ?: 0L,
             pinLockoutEndElapsedMs = preferences[KEY_PIN_LOCKOUT_END_ELAPSED_MS] ?: 0L,
-            pinLockoutEndWallMs = preferences[KEY_PIN_LOCKOUT_END_WALL_MS] ?: 0L
+            pinLockoutStartWallMs = preferences[KEY_PIN_LOCKOUT_START_WALL_MS] ?: 0L,
+            pinLockoutEndWallMs = preferences[KEY_PIN_LOCKOUT_END_WALL_MS] ?: 0L,
+            reminderLastNotified = preferences[KEY_REMINDER_LAST_NOTIFIED] ?: emptySet()
         ).also { cachedSettings = it }
     }
 
@@ -219,6 +232,7 @@ class AppSettingsRepository(val context: Context) {
             it[KEY_PIN_FAILED_ATTEMPTS] = 0
             it[KEY_PIN_LOCKOUT_START_ELAPSED_MS] = 0L
             it[KEY_PIN_LOCKOUT_END_ELAPSED_MS] = 0L
+            it[KEY_PIN_LOCKOUT_START_WALL_MS] = 0L
             it[KEY_PIN_LOCKOUT_END_WALL_MS] = 0L
             mapPreferencesToSettings(it)
         }
@@ -245,6 +259,7 @@ class AppSettingsRepository(val context: Context) {
                 prefs[KEY_PIN_FAILED_ATTEMPTS] = 0
                 prefs[KEY_PIN_LOCKOUT_START_ELAPSED_MS] = 0L
                 prefs[KEY_PIN_LOCKOUT_END_ELAPSED_MS] = 0L
+                prefs[KEY_PIN_LOCKOUT_START_WALL_MS] = 0L
                 prefs[KEY_PIN_LOCKOUT_END_WALL_MS] = 0L
                 mapPreferencesToSettings(prefs)
             }
@@ -264,6 +279,7 @@ class AppSettingsRepository(val context: Context) {
             if (delayMs > 0L) {
                 prefs[KEY_PIN_LOCKOUT_START_ELAPSED_MS] = currentElapsedMs
                 prefs[KEY_PIN_LOCKOUT_END_ELAPSED_MS] = currentElapsedMs + delayMs
+                prefs[KEY_PIN_LOCKOUT_START_WALL_MS] = currentWallMs
                 prefs[KEY_PIN_LOCKOUT_END_WALL_MS] = currentWallMs + delayMs
             }
             mapPreferencesToSettings(prefs)
@@ -276,6 +292,7 @@ class AppSettingsRepository(val context: Context) {
             prefs[KEY_PIN_FAILED_ATTEMPTS] = 0
             prefs[KEY_PIN_LOCKOUT_START_ELAPSED_MS] = 0L
             prefs[KEY_PIN_LOCKOUT_END_ELAPSED_MS] = 0L
+            prefs[KEY_PIN_LOCKOUT_START_WALL_MS] = 0L
             prefs[KEY_PIN_LOCKOUT_END_WALL_MS] = 0L
             mapPreferencesToSettings(prefs)
         }
@@ -349,7 +366,33 @@ class AppSettingsRepository(val context: Context) {
     }
 
     suspend fun setHasShownAutoBackupDisclosure(shown: Boolean) {
-        context.dataStore.edit { it[KEY_DISCLOSURE_SHOWN] = shown }
+        context.dataStore.edit {
+            it[KEY_DISCLOSURE_SHOWN] = shown
+            mapPreferencesToSettings(it)
+        }
+    }
+
+    suspend fun setHasShownAutoBackupNotification(shown: Boolean) {
+        context.dataStore.edit {
+            it[KEY_AUTO_BACKUP_NOTIFICATION_SHOWN] = shown
+            mapPreferencesToSettings(it)
+        }
+    }
+
+    suspend fun setHasAskedCommitmentNotificationPermission(asked: Boolean) {
+        cachedSettings = cachedSettings?.copy(hasAskedCommitmentNotificationPermission = asked)
+        context.dataStore.edit {
+            it[KEY_ASKED_COMMITMENT_NOTIF_PERMISSION] = asked
+            mapPreferencesToSettings(it)
+        }
+    }
+
+    suspend fun setReminderLastNotified(markers: Set<String>) {
+        cachedSettings = cachedSettings?.copy(reminderLastNotified = markers)
+        context.dataStore.edit {
+            it[KEY_REMINDER_LAST_NOTIFIED] = markers
+            mapPreferencesToSettings(it)
+        }
     }
 
     suspend fun setOnboardingCompleted(completed: Boolean) {

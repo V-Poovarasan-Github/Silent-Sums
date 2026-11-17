@@ -661,6 +661,39 @@ fun SettingsScreen(
                             )
                         }
 
+                        val isNotifPermissionBlocked = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) ||
+                            !androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+                        if (state.settings.dueRemindersEnabled && isNotifPermissionBlocked) {
+                            Text(
+                                text = "Notifications are blocked, so reminders will not appear. Tap to allow.",
+                                fontSize = 11.sp,
+                                color = ExpenseRed,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        try {
+                                            val intent = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            context.startActivity(intent)
+                                        } catch (_: Exception) {
+                                            try {
+                                                val fallback = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                    data = Uri.fromParts("package", context.packageName, null)
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                }
+                                                context.startActivity(fallback)
+                                            } catch (_: Exception) {}
+                                        }
+                                    }
+                                    .padding(bottom = 8.dp)
+                                    .testTag("due_reminders_blocked_caption")
+                            )
+                        }
+
                         // Help & gestures row (gated on helpVisible)
                         if (state.settings.helpVisible) {
                             HorizontalDivider(
@@ -1010,6 +1043,18 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Daily Auto-Save", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+                                val realAutoSaveFilePath = MediaStoreWriter.displayAutoBackupFilePath(
+                                    context,
+                                    state.settings.autoSaveTreeUri
+                                )
+                                Text(
+                                    text = "Saves a readable CSV of all your transactions to $realAutoSaveFilePath. Anyone who can open your files can read it.",
+                                    fontSize = 11.sp,
+                                    color = TextMuted,
+                                    modifier = Modifier
+                                        .padding(top = 2.dp)
+                                        .testTag("settings_auto_save_disclosure_caption")
+                                )
                                 Text(
                                     autoSaveStatusText,
                                     fontSize = 11.sp,

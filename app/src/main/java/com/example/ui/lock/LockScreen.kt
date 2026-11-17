@@ -116,10 +116,7 @@ private fun triggerFallbackBiometricPrompt(
         .setTitle("Unlock SilentSums")
         .setSubtitle("Authenticate using your fingerprint")
         .setNegativeButtonText("Use PIN")
-        .setAllowedAuthenticators(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.BIOMETRIC_WEAK
-        )
+        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
         .build()
 
     try {
@@ -157,17 +154,20 @@ fun LockScreen(
     var localFailedAttempts by remember { mutableIntStateOf(0) }
     var localStartElapsedMs by remember { mutableLongStateOf(0L) }
     var localEndElapsedMs by remember { mutableLongStateOf(0L) }
+    var localStartWallMs by remember { mutableLongStateOf(0L) }
     var localEndWallMs by remember { mutableLongStateOf(0L) }
 
     val effectiveFailedAttempts = maxOf(localFailedAttempts, persistedSettings.pinFailedAttempts)
     val effectiveStartElapsedMs = maxOf(localStartElapsedMs, persistedSettings.pinLockoutStartElapsedMs)
     val effectiveEndElapsedMs = maxOf(localEndElapsedMs, persistedSettings.pinLockoutEndElapsedMs)
+    val effectiveStartWallMs = maxOf(localStartWallMs, persistedSettings.pinLockoutStartWallMs)
     val effectiveEndWallMs = maxOf(localEndWallMs, persistedSettings.pinLockoutEndWallMs)
 
     LaunchedEffect(
         persistedSettings.pinFailedAttempts,
         persistedSettings.pinLockoutStartElapsedMs,
         persistedSettings.pinLockoutEndElapsedMs,
+        persistedSettings.pinLockoutStartWallMs,
         persistedSettings.pinLockoutEndWallMs
     ) {
         if (persistedSettings.pinFailedAttempts > localFailedAttempts ||
@@ -177,6 +177,7 @@ fun LockScreen(
             localFailedAttempts = persistedSettings.pinFailedAttempts
             localStartElapsedMs = persistedSettings.pinLockoutStartElapsedMs
             localEndElapsedMs = persistedSettings.pinLockoutEndElapsedMs
+            localStartWallMs = persistedSettings.pinLockoutStartWallMs
             localEndWallMs = persistedSettings.pinLockoutEndWallMs
         } else if (persistedSettings.pinFailedAttempts == 0 &&
             persistedSettings.pinLockoutEndElapsedMs == 0L &&
@@ -185,6 +186,7 @@ fun LockScreen(
         ) {
             localStartElapsedMs = 0L
             localEndElapsedMs = 0L
+            localStartWallMs = 0L
             localEndWallMs = 0L
         }
     }
@@ -197,12 +199,13 @@ fun LockScreen(
         lockoutEndElapsedMs = effectiveEndElapsedMs,
         lockoutEndWallMs = effectiveEndWallMs,
         currentElapsedMs = nowElapsedMs,
-        currentWallMs = nowWallMs
+        currentWallMs = nowWallMs,
+        lockoutStartWallMs = effectiveStartWallMs
     )
     val isLockedOut = remainingLockoutMs > 0L
     val isKeypadDisabled = !isSettingsLoaded || isLockedOut
 
-    LaunchedEffect(effectiveStartElapsedMs, effectiveEndElapsedMs, effectiveEndWallMs) {
+    LaunchedEffect(effectiveStartElapsedMs, effectiveEndElapsedMs, effectiveStartWallMs, effectiveEndWallMs) {
         nowElapsedMs = elapsedRealtimeProvider()
         nowWallMs = wallClockProvider()
         while (
@@ -211,7 +214,8 @@ fun LockScreen(
                 lockoutEndElapsedMs = effectiveEndElapsedMs,
                 lockoutEndWallMs = effectiveEndWallMs,
                 currentElapsedMs = nowElapsedMs,
-                currentWallMs = nowWallMs
+                currentWallMs = nowWallMs,
+                lockoutStartWallMs = effectiveStartWallMs
             ) > 0L
         ) {
             delay(200L)
@@ -261,6 +265,7 @@ fun LockScreen(
         localFailedAttempts = 0
         localStartElapsedMs = 0L
         localEndElapsedMs = 0L
+        localStartWallMs = 0L
         localEndWallMs = 0L
         errorMessage = null
         enteredPin = ""
@@ -280,7 +285,8 @@ fun LockScreen(
                 lockoutEndElapsedMs = effectiveEndElapsedMs,
                 lockoutEndWallMs = effectiveEndWallMs,
                 currentElapsedMs = nowElapsedMs,
-                currentWallMs = nowWallMs
+                currentWallMs = nowWallMs,
+                lockoutStartWallMs = effectiveStartWallMs
             ) > 0L
         ) {
             return
@@ -298,6 +304,7 @@ fun LockScreen(
                 localFailedAttempts = 0
                 localStartElapsedMs = 0L
                 localEndElapsedMs = 0L
+                localStartWallMs = 0L
                 localEndWallMs = 0L
                 errorMessage = null
                 enteredPin = ""
@@ -315,6 +322,7 @@ fun LockScreen(
                 if (delayMs > 0L) {
                     localStartElapsedMs = curElapsed
                     localEndElapsedMs = curElapsed + delayMs
+                    localStartWallMs = curWall
                     localEndWallMs = curWall + delayMs
                     nowElapsedMs = curElapsed
                     nowWallMs = curWall

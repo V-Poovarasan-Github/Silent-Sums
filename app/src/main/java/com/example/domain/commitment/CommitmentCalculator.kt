@@ -23,9 +23,22 @@ data class CommitmentGroups(
 
 object CommitmentCalculator {
 
-    private val cycleFormat = SimpleDateFormat("yyyy-MM", Locale.US)
-    private val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
-    private val dayMonthFormat = SimpleDateFormat("d MMM", Locale.US)
+    private val cycleFormatLocal = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("yyyy-MM", Locale.US)
+    }
+    private val monthYearFormatLocal = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("MMMM yyyy", Locale.US)
+    }
+    private val dayMonthFormatLocal = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("d MMM", Locale.US)
+    }
+
+    private val cycleFormat: SimpleDateFormat
+        get() = cycleFormatLocal.get()!!
+    private val monthYearFormat: SimpleDateFormat
+        get() = monthYearFormatLocal.get()!!
+    private val dayMonthFormat: SimpleDateFormat
+        get() = dayMonthFormatLocal.get()!!
 
     fun clampedDayForMonth(year: Int, monthZeroBased: Int, targetDay: Int): Int {
         val cal = Calendar.getInstance().apply {

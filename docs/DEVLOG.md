@@ -216,3 +216,30 @@
 3. **7.3 `PRIVACY_POLICY.md`**:
    - Created a plain-language privacy policy matching the verified Phase 1–6 implementation: 100% offline (`android.permission.INTERNET` absent), zero analytics or third-party SDKs, all data in private app storage, salted PBKDF2 PIN hash that never leaves the device, `allowBackup="false"`, `FLAG_SECURE` screen protection, contextual permissions, and user-controlled CSV/JSON exports.
 
+---
+
+## v1.1 hardening (branch `v1.1-hardening`)
+
+1. **Item 1 — Auto-save visibility (`MediaStoreWriter.kt`, `AppSettingsRepository.kt`, `AutoBackupWorker.kt`, `SettingsScreen.kt`, `DashboardScreen.kt`, `PaisaTrackApp.kt`, `V1_1HardeningTest.kt`)**:
+   - Added `MediaStoreWriter.displayAutoBackupFilePath` (using `resolveWriteRoot`, `AUTO_SUBFOLDER`, and `AUTO_BACKUP_FILE`), a permanent 11sp disclosure caption under Daily Auto-Save in Settings, and a one-time Dashboard `AlertDialog` after onboarding (`hasShownAutoBackupDisclosure`, separated from `hasShownAutoBackupNotification`). Added 3 tests (`item1_settingsCaptionShowsRealPath_defaultCustomAndInvalidFallback`, `item1_dashboardOneTimeDialog_showsOnceAfterOnboardingAndPersistsFlag`, `item1_dashboardOneTimeDialog_settingsButtonOpensSettingsAndPersistsFlag`).
+2. **Item 2 — Reminder notification lock-screen privacy (`DueReminderWorker.kt`, `V1_1HardeningTest.kt`)**:
+   - Set `lockscreenVisibility = Notification.VISIBILITY_PRIVATE` on `due_reminders_channel`, attached `setVisibility(NotificationCompat.VISIBILITY_PRIVATE)` and a generic `setPublicVersion` (`"SilentSums"` / `"You have a payment or IOU due."`) to every reminder notification, and masked amounts and `"Short by"` diffs with `"₹••••"` when `hideBalances` is `true`. Added 2 tests (`item2_dueReminderNotification_hasPrivateVisibilityAndGenericPublicVersion`, `item2_dueReminderNotification_masksAmountsAndShortByWhenPrivacyModeOn`).
+3. **Item 3 — Commitment notification permission prompt & blocked-status line (`AppSettingsRepository.kt`, `AddEditCommitmentSheet.kt`, `SettingsScreen.kt`, `V1_1HardeningTest.kt`)**:
+   - Added `hasAskedCommitmentNotificationPermission` in `AppSettingsRepository` to show the `"Enable Due Reminders"` rationale dialog and `POST_NOTIFICATIONS` prompt once on the first commitment save on Android 13+, plus a clickable `"Notifications are blocked, so reminders will not appear. Tap to allow."` warning under Due Reminders in Settings opening `Settings.ACTION_APP_NOTIFICATION_SETTINGS`. Added 2 tests (`item3_firstCommitmentSave_showsRationaleDialogOnceAndPersistsAskedFlag`, `item3_settingsScreen_showsBlockedNotificationsLineAndOpensAppNotificationSettings`).
+4. **Item 4 — Due-today reminders, half-open ranges & daily de-duplication (`AppSettingsRepository.kt`, `DueReminderWorker.kt`, `V1_1HardeningTest.kt`)**:
+   - Added injectable `now: Long` to `DueReminderWorker.checkAndNotify`, half-open day ranges (`due in todayStart until tomorrowStart` for `"due today"`, `due in tomorrowStart until tomorrowEnd` for `"due tomorrow"`, `due < todayStart` for `"overdue"`), and per-commitment daily de-duplication markers (`<commitmentId>:<yyyy-MM-dd>:<kind>`) in `reminderLastNotified` pruned after 7 days. Added 1 test (`item4_reminderTimingAndDeduplication_fakeClockDueTodayTomorrowOverdueAndBoundary`).
+5. **Auto-save "only if changed" check (`AutoBackupWorker.kt`, `MutationTracker.kt`)**:
+   - Reviewed the `MutationTracker.currentStamp <= settings.lastDataMutationTimestamp` skip branch in `AutoBackupWorker` and deliberately kept it untouched so in-process runs and post-restore runs (`UnifiedCsvStorage.restoreFromInputStream`) do not overwrite the backup file just restored from.
+6. **Item 6 — Thread-safe date formatting (`CommitmentCalculator.kt`, `V1_1HardeningTest.kt`)**:
+   - Replaced shared `SimpleDateFormat` instances (`cycleFormat`, `monthYearFormat`, `dayMonthFormat`) in `CommitmentCalculator` with `ThreadLocal<SimpleDateFormat>` instances. Added 1 multi-threaded concurrency test (`item6_commitmentCalculator_threadSafeConcurrentDateFormatting`).
+7. **Item 7 — Wall-clock rollback guard during PIN lockout (`PinHasher.kt`, `AppSettingsRepository.kt`, `LockScreen.kt`, `V1_1HardeningTest.kt`)**:
+   - Persisted `pinLockoutStartWallMs` alongside `pinLockoutEndWallMs` and updated `PinHasher.computeRemainingLockoutMs` so if a reboot occurred (`currentElapsedMs < lockoutStartElapsedMs`) and the wall clock moved backward (`lockoutStartWallMs > 0L && currentWallMs < lockoutStartWallMs`), the full lockout duration `(lockoutEndWallMs - lockoutStartWallMs)` remains while preserving v1.0.0 behavior when `pinLockoutStartWallMs == 0L`. Added 1 test (`item7_pinLockout_clockMovedBackAfterRebootFullDuration_normalRebootRemaining_legacyV100Unchanged`).
+8. **Item 8 — Biometric strength consistency (`LockScreen.kt`)**:
+   - Restricted `triggerFallbackBiometricPrompt` in `LockScreen.kt` to `BiometricManager.Authenticators.BIOMETRIC_STRONG` to match `BiometricHelper`.
+9. **Item 9 — Build hygiene (`app/build.gradle.kts`, `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`, `gradle/wrapper/gradle-wrapper.properties`)**:
+   - Updated the `debug` build type in `app/build.gradle.kts` to use `signingConfigs.getByName("debugConfig")` when `debug.keystore` exists and fall back to Android's default `signingConfigs.getByName("debug")` when absent, and committed the Gradle 9.3.1 wrapper.
+10. **Item 10 — Money rounding safety net (`V1_1HardeningTest.kt`)**:
+    - Added 1 unit test (`item10_moneyRoundingSafetyNet_1000x0_10_and_10000x1_10`) summing 1,000 transactions of `0.10` and 10,000 transactions of `1.10` through `LedgerCalculator` and asserting `Formatters.formatMoney` outputs `"₹100.00"` and `"₹11,000.00"`.
+11. **Measured Test Result & Invariants**:
+    - `gradle testDebugUnitTest --console=plain`: **428 total tests** across **43 test classes** (417 existing + 11 new in `V1_1HardeningTest`), **0 failed**, **0 skipped**.
+    - Auto-save stays ON by default (`autoBackupEnabled = true`, `autoSaveOnClose = true`) and is now disclosed in the app; reminder notifications are private on the lock screen; Room schema is still v10.

@@ -61,22 +61,13 @@ class DueReminderWorker(
         suspend fun checkAndNotify(
             context: Context,
             database: AppDatabase,
-            settingsRepository: AppSettingsRepository
+            settingsRepository: AppSettingsRepository,
+            now: Long = System.currentTimeMillis()
         ) {
             val settings = settingsRepository.settingsFlow.first()
             if (!settings.dueRemindersEnabled) return
 
             createNotificationChannel(context)
-
-            val now = System.currentTimeMillis()
-            val commitments = database.commitmentDao().getActiveCommitmentsList()
-            if (commitments.isEmpty()) return
-
-            val accounts = database.accountDao().getAllAccounts().first()
-            val transactions = database.transactionDao().getAllTransactions().first()
-            val balanceMap = LedgerCalculator.computeAccountBalances(accounts, transactions)
-                .associate { it.account.id to it.currentBalance }
-            val accountMap = accounts.associateBy { it.id }
 
             val todayStart = Calendar.getInstance().apply {
                 timeInMillis = now
@@ -88,57 +79,113 @@ class DueReminderWorker(
 
             val tomorrowStart = todayStart + 86_400_000L
             val tomorrowEnd = tomorrowStart + 86_400_000L
+            val cutoffStart = todayStart - 7L * 86_400_000L
+
+            val dayFormat = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val todayKey = dayFormat.format(java.util.Date(todayStart))
+            val activeMarkers = settings.reminderLastNotified.filterTo(mutableSetOf()) { entry ->
+                val parts = entry.split(":")
+                if (parts.size < 3) {
+                    false
+                } else {
+                    val entryDateMs = try {
+                        dayFormat.parse(parts[1])?.time
+                    } catch (_: Exception) {
+                        null
+                    }
+                    entryDateMs != null && entryDateMs >= cutoffStart
+                }
+            }
+            var markersChanged = activeMarkers != settings.reminderLastNotified
+
+            val commitments = database.commitmentDao().getActiveCommitmentsList()
+            if (commitments.isEmpty()) {
+                if (markersChanged) {
+                    settingsRepository.setReminderLastNotified(activeMarkers)
+                }
+                return
+            }
+
+            val accounts = database.accountDao().getAllAccounts().first()
+            val transactions = database.transactionDao().getAllTransactions().first()
+            val balanceMap = LedgerCalculator.computeAccountBalances(accounts, transactions)
+                .associate { it.account.id to it.currentBalance }
+            val accountMap = accounts.associateBy { it.id }
 
             for (c in commitments) {
                 if (!c.active || c.settled) continue
                 val due = CommitmentCalculator.computeNextDueDate(c, now) ?: continue
 
                 val isOverdue = due < todayStart
+                val isDueToday = due in todayStart until tomorrowStart
                 val isDueTomorrow = due in tomorrowStart until tomorrowEnd
 
-                if (!isOverdue && !isDueTomorrow) continue
+                if (!isOverdue && !isDueToday && !isDueTomorrow) continue
 
-                val formattedAmount = String.format(Locale.US, "%.0f", c.amount)
+                val kind = when {
+                    isDueToday -> "due_today"
+                    isDueTomorrow -> "due_tomorrow"
+                    else -> "overdue"
+                }
+                val marker = "${c.id}:$todayKey:$kind"
+                if (marker in activeMarkers) continue
+
+                val hideBalances = settings.hideBalances
+                val amountDisplay = if (hideBalances) {
+                    "₹••••"
+                } else {
+                    "₹${String.format(Locale.US, "%.0f", c.amount)}"
+                }
 
                 val (title, body) = when (c.type) {
                     "RECURRING" -> {
                         val accName = c.accountId?.let { accountMap[it]?.name } ?: "Account"
                         if (c.direction == "INCOMING") {
-                            if (isDueTomorrow) {
-                                "Upcoming Income" to "₹$formattedAmount ${c.name} expected in 1 day into $accName"
-                            } else {
-                                "Income Overdue" to "₹$formattedAmount ${c.name} expected in $accName is overdue"
+                            when {
+                                isDueToday -> "Upcoming Income" to "$amountDisplay ${c.name} due today into $accName"
+                                isDueTomorrow -> "Upcoming Income" to "$amountDisplay ${c.name} expected in 1 day into $accName"
+                                else -> "Income Overdue" to "$amountDisplay ${c.name} expected in $accName is overdue"
                             }
                         } else {
                             val balance = c.accountId?.let { balanceMap[it] } ?: 0.0
                             val shortFunds = if (balance < c.amount) {
-                                val diff = String.format(Locale.US, "%.0f", c.amount - balance)
-                                " (Short by ₹$diff)"
+                                val shortDisplay = if (hideBalances) {
+                                    "₹••••"
+                                } else {
+                                    "₹${String.format(Locale.US, "%.0f", c.amount - balance)}"
+                                }
+                                " (Short by $shortDisplay)"
                             } else ""
 
-                            if (isDueTomorrow) {
-                                "Upcoming Payment" to "₹$formattedAmount ${c.name} due tomorrow from $accName$shortFunds"
-                            } else {
-                                "Payment Overdue" to "₹$formattedAmount ${c.name} is overdue"
+                            when {
+                                isDueToday -> "Upcoming Payment" to "$amountDisplay ${c.name} due today from $accName$shortFunds"
+                                isDueTomorrow -> "Upcoming Payment" to "$amountDisplay ${c.name} due tomorrow from $accName$shortFunds"
+                                else -> "Payment Overdue" to "$amountDisplay ${c.name} is overdue"
                             }
                         }
                     }
                     else -> { // IOU
                         val directionText = if (c.direction == "OUTGOING") {
-                            "you owe ₹$formattedAmount to ${c.name}"
+                            "you owe $amountDisplay to ${c.name}"
                         } else {
-                            "${c.name} owes you ₹$formattedAmount"
+                            "${c.name} owes you $amountDisplay"
                         }
 
-                        if (isDueTomorrow) {
-                            "Upcoming IOU" to "$directionText due tomorrow"
-                        } else {
-                            "IOU Overdue" to "$directionText (Overdue)"
+                        when {
+                            isDueToday -> "Upcoming IOU" to "$directionText due today"
+                            isDueTomorrow -> "Upcoming IOU" to "$directionText due tomorrow"
+                            else -> "IOU Overdue" to "$directionText (Overdue)"
                         }
                     }
                 }
 
                 showNotification(context, c.id.toInt(), title, body)
+                activeMarkers.add(marker)
+                markersChanged = true
+            }
+
+            if (markersChanged) {
+                settingsRepository.setReminderLastNotified(activeMarkers)
             }
         }
 
@@ -150,6 +197,7 @@ class DueReminderWorker(
                 val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                     description = descriptionText
                     enableVibration(true)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
                 }
                 val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.createNotificationChannel(channel)
@@ -175,12 +223,23 @@ class DueReminderWorker(
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
+                val publicNotification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("SilentSums")
+                    .setContentText("You have a payment or IOU due.")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build()
+
                 val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle(title)
                     .setContentText(message)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                    .setPublicVersion(publicNotification)
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
 
