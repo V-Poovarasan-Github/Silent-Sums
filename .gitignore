@@ -18,3 +18,12 @@ local.properties
 debug.keystore
 metadata.json
 public/
+
+# Signing keys and credentials: never commit these
+*.jks
+*.keystore
+*.p12
+*.pfx
+my-upload-key.jks
+keystore.properties
+signing.properties

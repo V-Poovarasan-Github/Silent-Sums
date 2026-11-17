@@ -9,9 +9,18 @@
 <link rel="canonical" href="https://v-poovarasan-github.github.io/Silent-Sums/privacy.html" />
 <link rel="icon" type="image/png" href="logo.png" />
 <link rel="apple-touch-icon" href="logo.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/space-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Fonts are self-hosted (SIL OFL) so visiting this page makes no third-party requests. */
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/space-grotesk-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/space-grotesk-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/inter-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/inter-latin-500-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/inter-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/inter-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/inter-latin-800-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+</style>
 <style>
   :root{
     --ink:#090E17;
@@ -114,13 +123,13 @@
 
 <main class="wrap">
   <h1>Privacy Policy — SilentSums</h1>
-  <p class="meta-line">Effective date: November 11, 2026 · Application: SilentSums (<code>app.silentsums</code>)</p>
+  <p class="meta-line">Effective date: November 11, 2026 · Last updated: November 17, 2026 · Application: SilentSums (<code>app.silentsums</code>)</p>
 
   <p class="intro">SilentSums is a 100% offline personal finance application for Android. We do not collect, transmit, store, share, or sell any of your personal or financial information. <span>Because the app does not request the Android <code>INTERNET</code> permission, it is technically incapable of sending data over a network.</span></p>
 
   <section class="policy">
     <h2>1. What Data the App Handles Locally</h2>
-    <p>When you use SilentSums, the app stores the information you enter directly on your device inside private app storage (<code>context.filesDir</code> and a local Room SQLite database):</p>
+    <p>When you use SilentSums, the app stores the information you enter directly on your device inside private app storage (<code>context.filesDir</code> and a local Room SQLite database). The only copies kept outside private storage are the CSV files described in section 4:</p>
     <ul>
       <li><b>Financial ledger records:</b> Transactions, split transaction lines, dates, descriptions, notes, and custom ledger field values.</li>
       <li><b>Organization &amp; planning data:</b> Accounts/sources (cash, bank accounts, credit cards) with opening balances, categories, monthly budgets, and recurring commitments (bills, subscriptions, loans, and IOUs).</li>
@@ -135,8 +144,8 @@
       <li><b>No network access:</b> <code>android.permission.INTERNET</code> is not declared in <code>AndroidManifest.xml</code>. No data is ever transmitted to us or to any third party.</li>
       <li><b>No analytics, ads, or third-party SDKs:</b> SilentSums contains zero analytics libraries, advertising SDKs, telemetry trackers, or remote crash-reporting tools.</li>
       <li><b>Hashed PIN storage:</b> If you set a 4-digit PIN, the plaintext PIN is never written to disk. Only a salted <code>PBKDF2WithHmacSHA256</code> hash (120,000 iterations, 16-byte random salt) is stored in local preferences, and it never leaves your device.</li>
-      <li><b>Cloud backup disabled:</b> Android Auto Backup and device-to-device cloud transfer are disabled (<code>android:allowBackup="false"</code> with explicit domain exclusions in <code>backup_rules.xml</code> and <code>data_extraction_rules.xml</code>), ensuring your ledger database and media files are not silently uploaded to cloud backup servers.</li>
-      <li><b>Screen capture protection:</b> When the lock screen is active or Privacy Mode (<code>hideBalances</code>) is enabled, SilentSums enables <code>FLAG_SECURE</code> to prevent screenshots, screen recordings, and Recent Apps thumbnail previews.</li>
+      <li><b>Cloud backup disabled:</b> Android Auto Backup and device-to-device cloud transfer are disabled (<code>android:allowBackup="false"</code> with explicit domain exclusions in <code>backup_rules.xml</code> and <code>data_extraction_rules.xml</code>), ensuring your ledger database and media files are not uploaded to cloud backup servers. (The auto-saved CSV described in section 4 is a local file, not a cloud backup.)</li>
+      <li><b>Screen capture protection:</b> While App Lock or Privacy Mode (<code>hideBalances</code>) is turned on, SilentSums enables <code>FLAG_SECURE</code> to prevent screenshots, screen recordings, and Recent Apps thumbnail previews.</li>
     </ul>
   </section>
 
@@ -145,22 +154,23 @@
     <p>SilentSums requests permissions only for specific local features that you initiate:</p>
     <ul>
       <li><b>Microphone (<code>RECORD_AUDIO</code>):</b> Requested only when you tap the Voice Memo button on a transaction entry to record an offline audio note.</li>
-      <li><b>Notifications (<code>POST_NOTIFICATIONS</code>):</b> Requested on Android 13+ only when you enable local Due Reminders or Auto-Backup status alerts in Settings.</li>
+      <li><b>Notifications (<code>POST_NOTIFICATIONS</code>):</b> Requested on Android 13+ when you turn on local Due Reminders or Auto-Backup alerts in Settings. Reminder notifications include the name and amount of the item that is due, and Android may show them on your lock screen depending on your notification settings.</li>
       <li><b>Biometrics (<code>USE_BIOMETRIC</code>):</b> Used locally through Android's <code>BiometricPrompt</code> if you enable fingerprint/biometric unlock in Settings.</li>
-      <li><b>Legacy storage (<code>WRITE_EXTERNAL_STORAGE</code>, Android 9 / API 28 and below only):</b> Used on older Android versions when exporting CSV or JSON backup files to your <code>Downloads</code> folder.</li>
+      <li><b>Legacy storage (<code>WRITE_EXTERNAL_STORAGE</code>, Android 9 / API 28 and below only):</b> Used on older Android versions when saving CSV or JSON files (auto-saves and exports) to your <code>Downloads</code> folder.</li>
     </ul>
   </section>
 
   <section class="policy">
     <h2>4. Backups, Exports, and Sharing</h2>
-    <p>None of your data leaves your device unless you explicitly export or share a file yourself:</p>
+    <p>SilentSums never sends your data anywhere. Readable copies are written to your phone's file storage in the cases below, and sharing a file is always your own action:</p>
     <ul>
-      <li><b>CSV backups (<code>.csv</code>):</b> Contain your text-based ledger records (transactions, accounts, categories, budgets, commitments, and custom fields). Receipt photos, voice notes, and your PIN hash are <b>not</b> included in CSV files.</li>
-      <li><b>JSON backups (<code>.json</code>):</b> Contain your accounts, categories, custom fields, transactions, and a few display settings. Receipt photos, voice notes, and your PIN hash are <b>not</b> included in JSON backups.</li>
+      <li><b>Daily Auto-Save (on by default):</b> Once your ledger has transactions, SilentSums saves a readable <code>.csv</code> copy of it to <code>Downloads/SilentSums/auto/backup.csv</code> (or to the folder you choose in Settings) once a day and whenever you leave the app. It is a single rolling file, overwritten each time, and it is skipped while your ledger is empty. It is a plain, unencrypted text file, so anyone who can open your phone's files (a file manager, a USB connection, or an app you have given file access) can read it, and PIN lock and Privacy Mode do not apply to it. Switch it off or pick another folder under <b>Settings &rarr; Daily Auto-Save</b>. A matching copy is also kept in the app's private storage.</li>
+      <li><b>CSV files (<code>.csv</code>, auto-saved or exported):</b> Contain your text-based ledger records (transactions, accounts, categories, budgets, commitments, custom fields, and a few display settings). Receipt photos, voice notes, and your PIN hash are <b>not</b> included in CSV files.</li>
+      <li><b>JSON exports (<code>.json</code>, only when you export):</b> Contain your accounts, categories, custom fields, transactions, and a few display settings. Receipt photos, voice notes, and your PIN hash are <b>not</b> included in JSON exports.</li>
       <li><b>Optional media Mirror:</b> Photos and voice notes live only in the app's private storage on your phone. If you turn on the Mirror setting and choose a folder, copies of your attachments are written to that folder so they can survive a reinstall or a new phone. Mirror is off by default and the folder is one you pick.</li>
       <li><b>Crash logs:</b> If the app encounters an unexpected crash, the stack trace is saved locally in private storage. It is never uploaded automatically; you choose whether to inspect or share it via Android's share sheet.</li>
     </ul>
-    <p>When you export a backup to a custom folder (via Android's Storage Access Framework or <code>Downloads</code>) or share a file through Android's share sheet, that exported file is governed by your own device storage and whichever app or service you choose to send it to.</p>
+    <p>Once a CSV or JSON file is saved to <code>Downloads</code> or a folder you chose, or you send one through Android's share sheet, it is governed by your own device storage and whichever app or service you choose to send it to. SilentSums cannot protect or recall it.</p>
   </section>
 
   <section class="policy">
@@ -168,8 +178,9 @@
     <p>Because all data lives exclusively on your device, you have complete control over deletion at any time:</p>
     <ul>
       <li>Delete individual transactions, attachments, accounts, categories, budgets, or commitments directly inside the app.</li>
-      <li>Use <b>Settings &rarr; Clear All Data</b> to wipe the local ledger and media vault.</li>
+      <li>Use <b>Settings &rarr; Clear All Ledger Data</b> to wipe the local ledger and media vault.</li>
       <li>Clear the app's storage in Android System Settings or uninstall SilentSums to permanently remove all private app data, databases, preferences, and PIN hashes from your device.</li>
+      <li><b>CSV files are separate.</b> Clearing data or uninstalling does not delete CSV or JSON files already saved to <code>Downloads</code> or another folder (and because Auto-Save skips an empty ledger, the last auto-saved CSV is left as it was). To remove them, delete the <code>SilentSums</code> folder in your Files app and any copies you shared.</li>
     </ul>
   </section>
 

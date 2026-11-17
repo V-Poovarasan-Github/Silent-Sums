@@ -3,7 +3,7 @@
 > **Your money. Your phone. Nobody else's business.**
 > A 100% offline personal finance app for Android. No account. No cloud. No ads. No analytics. No tracking. Just a fast, local ledger that lives entirely on your device — and a CSV you can read, edit, and walk away with, forever.
 
-**3.19 MB release APK (3.04 MiB / 3,187,628 bytes).** Works in airplane mode. Zero network permissions.
+**About 3.2 MB release APK (v1.0.0 is 3,204,729 bytes).** Works in airplane mode. Zero network permissions.
 
 ---
 
@@ -11,11 +11,11 @@
 
 Most "free" money apps are a trap: 100+ MB, an account before you can type a single rupee, ads on your salary screen, and your entire financial life quietly syncing to someone else's server. Then one day they pivot, get acquired, or shut down — and your data is hostage.
 
-SilentSums is the opposite bet. Built for real life: the ₹170 tea on the highway home, the hospital tablets for Mom, Dad's cash salary kept in the pooja room, four Paradise movie tickets, the car EMI that auto-records itself on the 10th. If an app can't handle *that* without phoning home, it isn't yours.
+SilentSums is the opposite bet. Built for real life: the ₹170 tea on the highway home, the hospital tablets for Mom, Dad's cash salary kept in the pooja room, four Paradise movie tickets, the car EMI due on the 10th. If an app can't handle *that* without phoning home, it isn't yours.
 
 ## What it does
 
-- **🔒 Truly offline.** Declares zero network permissions (`android.permission.INTERNET` is absent from the manifest). Your balances never leave the phone unless *you* export them.
+- **🔒 Truly offline.** Declares zero network permissions (`android.permission.INTERNET` is absent from the manifest). Nothing is ever sent anywhere. Your ledger lives in a private on-device database; the only readable copies are the CSV files Daily Auto-Save and your exports write to your phone.
 - **😀 Emoji categories.** Tag spending with 🍽️ 🏥 💰 — or paste any emoji you want, because a budget shouldn't feel like homework. Colors + glyphs are yours to choose.
 - **👁️ Privacy mode.** One tap turns every number into `••••` (with TalkBack announcing `"hidden"`). Open it on the bus, in the office, in front of anyone — no shoulder-surfing, no embarrassment.
 - **🔐 PIN lock + grace.** Optional 4-digit PIN and biometric app lock with a configurable grace window, so returning to the app doesn't nag you every 30 seconds.
@@ -24,7 +24,8 @@ SilentSums is the opposite bet. Built for real life: the ₹170 tea on the highw
 - **📊 Budget guardrails.** Per-category and per-account limits with live green/amber/red status chips, so overspending is visible before the statement arrives.
 - **📈 Trends that respect you.** Running-balance and income-vs-spend charts with tap-to-zoom, hold-to-open-ledger, and accessible exact-value announcements.
 - **🧾 CSV & JSON you own.** Export your ledger to a human-readable `expense_tracker.csv` (or a `.json` snapshot of accounts, categories, and transactions), plus an optional media Mirror folder for receipt photos and voice memos; import it back anytime, on any device, into any tool. No proprietary lock-in.
-- **🪶 Featherweight.** 3.19 MB R8-minified release APK (6.78 MB AAB). Installs in seconds, opens instantly, sips battery.
+- **🗂️ Daily Auto-Save (on by default).** Once you have transactions, a plain CSV copy of your ledger is saved to `Downloads/SilentSums/auto/backup.csv` (or a folder you choose) daily and whenever you leave the app, so your data always sits in a file you can open, with no cloud involved. It is unencrypted, so anyone who can open your phone's files can read it, and PIN lock and Privacy Mode do not apply to it. Turn it off or change the folder in **Settings → Daily Auto-Save**.
+- **🪶 Featherweight.** About 3.2 MB R8-minified release APK, small enough to install quickly on any phone.
 
 ## Security
 
@@ -33,8 +34,8 @@ SilentSums enforces defense-in-depth for local financial data:
 - **Salted PBKDF2-HMAC-SHA256 PIN Hashing (`PinHasher.kt`)**: User PINs are never stored in plaintext. PINs are hashed off the main thread using `PBKDF2WithHmacSHA256` with 120,000 iterations, a 16-byte `SecureRandom` salt, and a 256-bit derived key (`"v1$<iterations>$<saltB64>$<hashB64>"`), verified in constant time via `MessageDigest.isEqual`.
 - **Persistent Brute-Force Lockout**: Failed PIN attempts are tracked across process death and device reboots using monotonic `SystemClock.elapsedRealtime()` with wall-clock fallback. Starting at 5 failed attempts, exponential backoff locks the keypad (`30s → 60s → 120s → 240s → 480s → 900s` max) while keeping biometric authentication available.
 - **PIN Scrubbing on Export/Restore**: Exported CSV and JSON backups omit `pinHash` and lockout metadata, and backup restores ignore any external PIN fields so local device lock settings cannot be overwritten or leaked by a backup file.
-- **`FLAG_SECURE` Window Protection**: `WindowManager.LayoutParams.FLAG_SECURE` is dynamically applied whenever the lock screen is active or Privacy Mode (`hideBalances`) is enabled, blocking screenshots, screen recording, and Recent Apps thumbnails of sensitive balances.
-- **Cloud Backup & Device Transfer Disabled (`allowBackup="false"`)**: `android:allowBackup="false"` is enforced alongside explicit `<full-backup-content>` and `<data-extraction-rules>` exclusions across `sharedpref`, `database`, `file`, and `root` domains so ledger data is never silently uploaded to cloud backup providers.
+- **`FLAG_SECURE` Window Protection**: `WindowManager.LayoutParams.FLAG_SECURE` is dynamically applied whenever App Lock or Privacy Mode (`hideBalances`) is turned on, blocking screenshots, screen recording, and Recent Apps thumbnails of sensitive balances.
+- **Cloud Backup & Device Transfer Disabled (`allowBackup="false"`)**: `android:allowBackup="false"` is enforced alongside explicit `<full-backup-content>` and `<data-extraction-rules>` exclusions across the `sharedpref`, `database` and `file` domains so ledger data is never uploaded to cloud backup providers.
 - **Narrowed `FileProvider` Scope**: `res/xml/file_paths.xml` exposes only two dedicated cache subdirectories (`cacheDir/share/` for user-initiated CSV/JSON share sheets and `cacheDir/media_staging/` for temporary attachment viewing), never the root `filesDir` or database directory.
 
 ## Privacy & security, in plain words
@@ -45,14 +46,14 @@ SilentSums enforces defense-in-depth for local financial data:
 | No cloud | Data lives in a local Room (SQLite) database in private app storage (`app.silentsums`). |
 | No tracking | No analytics SDK, no ad SDK, no crash-reporting upload. |
 | No network capability | No `INTERNET` permission in `AndroidManifest.xml`. |
-| Your data, portable | One-tap CSV and JSON export/import, plus optional user-picked media Mirror folder for receipt photos and voice notes. |
+| Your data, portable | One-tap CSV and JSON export/import, a daily auto-saved CSV in `Downloads/SilentSums/auto/` (on by default, plain text, can be turned off), plus an optional user-picked media Mirror folder for receipt photos and voice notes. |
 | Lockable | Salted PBKDF2 PIN + biometric unlock with grace period and `FLAG_SECURE` privacy mask. |
 
 See [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) for the full plain-language privacy policy and [`PLAY_STORE_GUIDE.md`](PLAY_STORE_GUIDE.md) for Google Play Data Safety details.
 
 ## Get it
 
-Grab the latest signed build from **[Releases](../../releases/latest)** → `app-release.apk` (3.19 MB / 3,187,628 bytes), or install via Google Play once published.
+Grab the latest signed build from **[Releases](../../releases/latest)** → `app-release.apk` (about 3.2 MB / 3,204,729 bytes), or install via Google Play once published.
 
 > Signed with a stable release key, so future versions install **over** this one with no data loss and no uninstall.
 
