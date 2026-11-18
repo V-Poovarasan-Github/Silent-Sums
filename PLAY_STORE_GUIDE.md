@@ -85,32 +85,42 @@ Use the following declarations for Google Play Console review notes and permissi
 
 ---
 
-## 8. Play Store Screenshot Checklist
+## 8. Play Store Graphics & Screenshots (Ready to Upload)
 
-Capture real, unframed screenshots on a physical device or high-resolution emulator before submitting the store listing.
+All required Google Play Console store listing graphics and rendered screenshots have been generated and verified in [`docs/play-store/`](docs/play-store/) in the exact dimensions and color formats required by Play Console.
 
-### Required Screens to Capture (Minimum 5 Recommended)
-1. **Dashboard Screen (`DashboardScreen`)**:
-   * Show the Net Balance hero card, Monthly Cashflow KPI tiles, Credit Cards summary (`20.sp` owed header + sub-tiles), Sources & Net Balances (`Your Money` row with flush-left Budget Chip & flush-right Opening Balance), Monthly Budgets progress cards, and Spending Insights trend chart.
-2. **Ledger Screen (`LedgerScreen`)**:
-   * Show grouped daily transactions, category emojis, multi-category split transaction expansion, search/filter bar, and running balance pills.
-3. **Transaction Entry Sheet (`EntryScreen`)**:
-   * Show the Expense / Income / Transfer type selector pills, smart inline expression calculator (e.g., `170+45`), split-line editor, and receipt photo / voice note attachment chips.
-4. **Lock Screen (`LockScreen`)**:
-   * Show the 4-digit PIN pad and Biometric unlock prompt (*note: temporarily disable `FLAG_SECURE` in a debug capture build or use Android Studio Layout Inspector/emulator capture, since `FLAG_SECURE` blocks screenshots on the lock screen in production builds*).
-5. **Settings & Data Ownership Screen (`SettingsScreen`)**:
-   * Show Privacy Mode toggle, PIN & Biometric Security controls, Due Reminders toggle, and the CSV / Full JSON Backup & Restore section.
+### Store Listing Branding Assets
 
-### Google Play Console Technical Specifications for Screenshots
-* **Phone Screenshots**:
-  * **Count**: 2 to 8 screenshots (capture all 5 screens above).
-  * **Format**: 24-bit PNG or JPEG (no alpha/transparency).
-  * **Aspect Ratio**: `9:16` (portrait) or `16:9` (landscape); maximum dimension may not exceed `2x` the minimum dimension.
-  * **Pixel Dimensions**: Minimum `320 px`, maximum `3840 px` per side; recommended portrait resolution is **`1080 x 1920 px`** (or `1080 x 2400 px` for modern 20:9 displays).
-* **7-inch & 10-inch Tablet Screenshots (Optional / Recommended for Large Screen Quality)**:
-  * **Count**: Up to 8 screenshots per form factor.
-  * **Recommended Resolution**: `1200 x 1920 px` (portrait) or `1920 x 1200 px` (landscape), `9:16` or `16:9`.
-* **Feature Graphic (Mandatory for Play Store Listing)**:
-  * **Dimensions**: Exactly **`1024 x 500 px`**, 24-bit PNG or JPEG (no alpha).
-* **High-Res App Icon (Mandatory for Play Store Listing)**:
-  * **Dimensions**: Exactly **`512 x 512 px`**, 32-bit PNG, maximum file size `1024 KB`.
+| Asset | File | Dimensions | Format & Size | Play Console Slot |
+| :--- | :--- | :--- | :--- | :--- |
+| **App Icon** | [`docs/play-store/app_icon_512.png`](docs/play-store/app_icon_512.png) | `512 x 512 px` | 32-bit RGBA PNG (`24 KB`) | **App icon** (`<= 1024 KB`) |
+| **Feature Graphic** | [`docs/play-store/feature_graphic.png`](docs/play-store/feature_graphic.png) | `1024 x 500 px` | 24-bit RGB PNG, no alpha (`194 KB`) | **Feature graphic** |
+
+### Phone Screenshots (`1080 x 1920 px`, 9:16 Portrait, 24-bit RGB PNG, No Alpha)
+
+| # | Screen | File | Size | Highlighted Features Shown |
+| :---: | :--- | :--- | :--- | :--- |
+| 1 | **Dashboard (`DashboardScreen`)** | [`docs/play-store/phone/01_dashboard.png`](docs/play-store/phone/01_dashboard.png) | `194 KB` | Net Balance hero card, Monthly Cashflow KPI tiles, Credit Cards debt summary, Sources & Net Balances (`Your Money`) |
+| 2 | **Expenses Ledger (`LedgerScreen`)** | [`docs/play-store/phone/02_ledger.png`](docs/play-store/phone/02_ledger.png) | `205 KB` | Grouped daily entries, expanded 3-part multi-category split transaction, search/filter chips, running balance pills |
+| 3 | **Transaction Entry (`EntryScreen`)** | [`docs/play-store/phone/03_entry.png`](docs/play-store/phone/03_entry.png) | `134 KB` | Expense / Income / Transfer selector pills, inline expression calculator (`-₹ 170+45`), live category budget badge, custom keypad |
+| 4 | **Vault Lock Screen (`LockScreen`)** | [`docs/play-store/phone/04_lock.png`](docs/play-store/phone/04_lock.png) | `62 KB` | Local 4-digit PIN pad and fingerprint/biometric unlock prompt (`FLAG_SECURE` enforced in production builds) |
+| 5 | **Settings & Backups (`SettingsScreen`)** | [`docs/play-store/phone/05_settings.png`](docs/play-store/phone/05_settings.png) | `193 KB` | Privacy Mode toggle, Data & Backups, CSV/JSON export & import, Daily Auto-Save folder & local storage usage |
+
+### 7-inch & 10-inch Tablet Screenshots (`1200 x 1920 px`, Portrait, 24-bit RGB PNG, No Alpha)
+
+Upload these portrait tablet screenshots to both the **7-inch tablet** and **10-inch tablet** slots in Google Play Console:
+
+| # | Screen | File | Size |
+| :---: | :--- | :--- | :--- |
+| 1 | **Dashboard (`DashboardScreen`)** | [`docs/play-store/tablet/01_dashboard.png`](docs/play-store/tablet/01_dashboard.png) | `206 KB` |
+| 2 | **Expenses Ledger (`LedgerScreen`)** | [`docs/play-store/tablet/02_ledger.png`](docs/play-store/tablet/02_ledger.png) | `220 KB` |
+| 3 | **Transaction Entry (`EntryScreen`)** | [`docs/play-store/tablet/03_entry.png`](docs/play-store/tablet/03_entry.png) | `145 KB` |
+| 4 | **Vault Lock Screen (`LockScreen`)** | [`docs/play-store/tablet/04_lock.png`](docs/play-store/tablet/04_lock.png) | `53 KB` |
+| 5 | **Settings & Backups (`SettingsScreen`)** | [`docs/play-store/tablet/05_settings.png`](docs/play-store/tablet/05_settings.png) | `189 KB` |
+
+### Google Play Console Specification Checklist
+* **Phone Screenshots**: 2 to 8 required (`5` provided), `1080 x 1920 px` (`9:16` portrait), 24-bit RGB PNG (no alpha).
+* **7-inch & 10-inch Tablet Screenshots**: Up to 8 per form factor (`5` provided), `1200 x 1920 px`, 24-bit RGB PNG (no alpha).
+* **Feature Graphic**: Mandatory, `1024 x 500 px`, 24-bit RGB PNG (no alpha).
+* **High-Res App Icon**: Mandatory, `512 x 512 px`, 32-bit RGBA PNG, `<= 1024 KB` (`24 KB`).
+
